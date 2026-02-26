@@ -168,7 +168,7 @@ public class Auto1 extends LinearOpMode {
             }else if(pathState == 4){//moving to end of intake position
                 Intake();
                 if(!follower.isBusy() && pathtime(1500)){//at end of intake position
-                    follower.followPath(Path5);//move to gate pos
+                    follower.followPath(Path5,0.6,true);//move to gate pos
                     pathState++;
                     pathTimer.reset();
                 }

@@ -17,7 +17,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "bluetele")
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "BlueTele")
 public class bluetele extends LinearOpMode {
     //Drivetrain
     DcMotorEx RightFront;
@@ -60,7 +60,7 @@ public class bluetele extends LinearOpMode {
     boolean autoaim = false;
 
     private Follower follower;
-    PIDFController SpindexController = new PIDFController(0.00023,0,0.00001,0);
+    PIDFController SpindexController = new PIDFController(0.00030,0,0.0000065,0);
 
 
     public void runOpMode() {
@@ -95,7 +95,7 @@ public class bluetele extends LinearOpMode {
 
 
         RightFlywheelMotor.setVelocityPIDFCoefficients(300,0,0,15.5);//Flywheel Velocity PIDF
-        SpindexController.setTolerance(50, 100);
+        SpindexController.setTolerance(80, 100);
 
         double raw = 0;
         waitForStart();
@@ -201,7 +201,7 @@ public class bluetele extends LinearOpMode {
             //SPINDEX MOVE
             if(!SpindexController.atSetPoint() && !SpindexManual){
                 raw = SpindexController.calculate(SpindexerMotor.getCurrentPosition());
-                SpindexerMotor.setPower(raw+(Math.signum(raw)*0.06));
+                SpindexerMotor.setPower(raw+(Math.signum(raw)*0.03));
             }else if(!SpindexManual){
                 SpindexerMotor.setPower(0);
             }
@@ -258,7 +258,7 @@ public class bluetele extends LinearOpMode {
                         IntakeState = 2;//wait until finished spinning to next chamber
                     }
                 }else if(IntakeState == 2) {
-                    if(Math.abs(SpindexerMotor.getPower())<=0.15){
+                    if(SpindexWithinTolerance()){
                         IntakeState = 1;//back to ready for ball
                     }
                 }
@@ -389,7 +389,7 @@ public class bluetele extends LinearOpMode {
     int ShootMacroState = 99;
     int numOuttaked = 0;
     ElapsedTime ShootTimer = new ElapsedTime();
-    int settleTime = 10;
+    int settleTime = 50;
     public boolean ShootUnsorted(){
         if(ShootMacroState == 0){//set up to outtake position
             SpindexSpinToClosestOuttake();
@@ -442,7 +442,7 @@ public class bluetele extends LinearOpMode {
         SpindexController.setSetPoint(SpindexGetAbsTarget(SpindexPos[indexOfClosest]));
     }
     public boolean SpindexWithinTolerance(){
-        if(Math.abs(SpindexController.getSetPoint()-SpindexerMotor.getCurrentPosition())<1000){
+        if(Math.abs(SpindexController.getSetPoint()-SpindexerMotor.getCurrentPosition())<800){
             return true;
         }
         return false;

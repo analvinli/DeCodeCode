@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
+import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.HeadingInterpolator;
@@ -27,9 +28,9 @@ import java.util.List;
 
 import com.pedropathing.follower.Follower;
 
-@Disabled
-@Autonomous(name = "RED_FAR_6HP")
-public class RED_FAR_6HP extends LinearOpMode {
+
+@Autonomous(name = "RED_CLOSE_12S")
+public class RED_CLOSE_12S extends LinearOpMode {
     //Drivetrain
     DcMotorEx RightFront;
     DcMotorEx RightRear;
@@ -64,7 +65,7 @@ public class RED_FAR_6HP extends LinearOpMode {
 
     boolean IntakeActive = false;
     int velocity = 0;
-    PIDFController SpindexController = new PIDFController(0.00024,0,0.00001,0);
+    PIDFController SpindexController = new PIDFController(0.00030,0,0.0000065,0);
     //PIDFController SpindexController = new PIDFController(0.00024,0,0.00001,0);
 
 
@@ -78,21 +79,20 @@ public class RED_FAR_6HP extends LinearOpMode {
     private ElapsedTime opmodeTimer;
     private int pathState;
 
-    private final Pose startPose = new Pose(96.38, 8.88, Math.toRadians(90));
-    private final Pose shootPose = new Pose(88, 12, Math.toRadians(70));
-    private final Pose humanPose = new Pose(127.35, 21.75, Math.toRadians(-90));
-    private final Pose humanPose2 = new Pose(127.35, 20.75, Math.toRadians(-90));
-    private final Pose humanPose3 = new Pose(120, 19.75, Math.toRadians(-120));
-    private final Pose humanPose4 = new Pose(120, 26.75, Math.toRadians(-120));
-    private final Pose leavePose = new Pose(115,12,Math.toRadians(90));
+    private final Pose startPose = new Pose(125.09512770137523, 120.48707269155206, Math.toRadians(36));
 
-    private PathChain shootPreloads;
-    private PathChain intakeHuman;
-    private PathChain intakeHuman2;
-    private PathChain intakeHuman3;
-    private PathChain intakeHuman4;
-    private PathChain shootHuman;
-    private PathChain leave;
+    public PathChain Path1;
+    public PathChain Path2;
+    public PathChain Path3;
+    public PathChain Path4;
+    public PathChain Path5;
+    public PathChain Path6;
+    public PathChain Path7;
+    public PathChain Path8;
+    public PathChain Path9;
+    public PathChain Path10;
+    public PathChain Path11;
+    public PathChain Path12;
 
     public void runOpMode() {
         //HARDWARE MAPPING
@@ -127,137 +127,283 @@ public class RED_FAR_6HP extends LinearOpMode {
         SpindexIncrementOuttake(2);
         int x = 0;
         while (opModeIsActive()) {
-//            motif = solveMotif(detectTag());
-//            telemetry.addData("detect", detectTag());
-//            telemetry.addData("motif0", motif[0]);
-//            telemetry.addData("motif1", motif[1]);
-//            telemetry.addData("motif2", motif[2]);
-
-
-            if(pathState == 0){
-                velocity = 1570;
-                HoodServo.setPosition(1);
-                follower.followPath(shootPreloads);
-                pathState++;
-
-            }if(pathState == 1){
-                if(!follower.isBusy() && FlywheelGood()){
-                    pathState++;
-                }
-            }if(pathState == 2){//shooting
-                if(ShootUnsorted()){
-                    pathState++;
-                    velocity = 0;
-                }
-            }if(pathState == 3){
-                follower.followPath(intakeHuman);
-                pathState++;
-                IntakeState = 0;
-            }if(pathState == 4){
-                Intake();
-                if(!follower.isBusy()){
-                    pathState++;
-                }
-            }if(pathState == 5){
-                follower.followPath(intakeHuman2,1,true);
+            if(pathState == 0){//start
+                velocity = 1150;//start up flywheel
+                HoodServo.setPosition(0);
+                follower.followPath(Path1);//move to read pos
                 pathState++;
                 pathTimer.reset();
-                IntakeState = 0;
-            }if(pathState == 6){//
-                Intake();
-                if(!follower.isBusy() || pathTimer.milliseconds()>1500){
-                    follower.followPath(intakeHuman3,1,true);
+            }else if(pathState == 1){//wait until at read position
+                if(detection()){
+                    follower.followPath(Path2);//move to scoring pos
                     pathState++;
                     pathTimer.reset();
-                    IntakeState = 0;
-
-                }
-            }if(pathState == 7){
-                Intake();
-                if(!follower.isBusy() || pathTimer.milliseconds()>2000){
-                    follower.followPath(intakeHuman4);
+                }else if(!follower.isBusy() && pathtime(3000)){
+                    motif = new int[] {1,1,2};
+                    follower.followPath(Path2);//move to scoring pos
                     pathState++;
-                    IntakeState = 0;
-
+                    pathTimer.reset();
                 }
-            }if(pathState == 8){
+            }else if(pathState == 2){//moving to scoring pos
+                if(!follower.isBusy() && pathtime(1500)){//at scoring position
+                    if(ShootUnsorted()){//shoot
+                        pathState++;
+                        velocity = 0;
+                        follower.followPath(Path3);//move to intake pos
+                        pathTimer.reset();
+                    }
+                }
+            }else if(pathState == 3){//moving to intake position
+                Intake();
+                if(!follower.isBusy() && pathtime(500)){//at start of intake
+                    follower.followPath(Path4,0.4,true);//move to end of intake
+                    IntakeState = 0;
+                    pathState++;
+                    pathTimer.reset();
+                }
+            }else if(pathState == 4){//moving to end of intake position
+                Intake();
+                if(!follower.isBusy() && pathtime(500)){//at end of intake position
+                    follower.followPath(Path5);//move to gate pos
+                    pathState = 222;
+                    pathTimer.reset();
+                }
+            }else if(pathState == 222){
                 Intake();
                 if(!follower.isBusy()){
-                    follower.followPath(shootHuman);
-                    pathState++;
-                    velocity = 1570;
-                    ScoreState = 0;
+                    pathState = 5;
+                    pathTimer.reset();
+                }else if(pathTimer.milliseconds()>500){
+                    pathState = 5;
+                    pathTimer.reset();
                 }
-            }if(pathState == 9){
-                if(!follower.isBusy() && FlywheelGood()){
-                    pathState++;
-                }
-            }if(pathState == 10){
-                if(ShootUnsorted()){
-                    pathState++;
-                    velocity = 0;
-                }
-            }if(pathState == 11){
-                follower.followPath(leave);
-                pathState++;
             }
+            else if(pathState == 5){//moving to gate pos
+                if(!follower.isBusy() && pathtime(1500)){//at gate position
+                    pathState++;
+                    velocity = 1150;//rev flywheel
+                    follower.followPath(Path6);//move to shoot pos
+                    ScoreState = 0;
+                    pathTimer.reset();
+                }
+            }else if(pathState == 6){//moving to shoot pos
+                if(!follower.isBusy() && pathtime(500)){//at shoot pos
+                    if(ShootSorted()){//when done shooting
+                        velocity = 0;
+                        follower.followPath(Path7);//move to 2nd intake pos
+                        pathState++;
+                        IntakeState = 0;
+                        pathTimer.reset();
+                    }
+                }
+            }else if(pathState == 7){//moving to 2nd intake pos
+                Intake();
+                if(!follower.isBusy() && pathtime(500)){//at 2nd intake pos
+                    follower.followPath(Path8,0.6,true);//move to end of 2nd intake
+                    pathState++;
+                    pathTimer.reset();
+                }
+            }else if(pathState == 8){//moving to 2nd intake
+                Intake();
+                if(!follower.isBusy() && pathtime(500)){//at end of 2nd intake
+                    follower.followPath(Path9);//move to shoot pos
+                    velocity = 1100;//rev flywheel
+                    pathState++;
+                    pathTimer.reset();
+                    ScoreStateSorted = 0;
+                }
+            }else if(pathState == 9){//moving to shooting pos
+                if(!follower.isBusy() && pathtime(500)){//at shoot pos
+                    if(ShootSorted()){//when done shooting
+                        velocity = 0;
+                        follower.followPath(Path10);//move to 3rd intake pos
+                        pathState++;
+                        IntakeState = 0;
+                        pathTimer.reset();
+                    }
+                }
+            }else if(pathState == 10){//moving to 3rd intake
+                Intake();
+                if(!follower.isBusy() && pathtime(500)){//at 3rd intake
+                    follower.followPath(Path11,0.6,true);//go to end of 3rd intake pos
+                    IntakeState = 0;
+                    pathState++;
+                    pathTimer.reset();
+                }
+            }else if(pathState == 11){//moving to end of 3rd intake pos
+                Intake();
+                if(!follower.isBusy() && pathtime(500)){//at end of 3rd intake
+                    follower.followPath(Path12,1,true);//move to shoot pos in a line
+                    velocity = 1150;
+                    ScoreStateSorted = 0;
+                    pathState++;
+                    pathTimer.reset();
+                }
+            }else if(pathState == 12){//moving to shoot pos
+                if(!follower.isBusy() && pathtime(500)){//at score pos
+                    if(ShootSorted()){
+                        velocity = 0;
+                        pathState++;
+                        pathTimer.reset();
+                        break;
+                    }
+                }
+            }
+
+
 
             follower.update();
             kickSM();
             SpindexSM();
             FlywheelSM(velocity);
 
-            //telemetry.addData("follower busy", follower.isBusy());
-            //telemetry.addData("x", x);
-
+//            telemetry.addData("detect", detectTag());
+//            telemetry.addData("motif0", motif[0]);
+//            telemetry.addData("motif1", motif[1]);
+//            telemetry.addData("motif2", motif[2]);
 //            telemetry.addData("path state", pathState);
-//            telemetry.addData("x", follower.getPose().getX());
-//            telemetry.addData("y", follower.getPose().getY());
-//            telemetry.addData("heading", follower.getPose().getHeading());
-            telemetry.addData("overshoot", SpindexerMotor.getCurrentPosition()-SpindexController.getSetPoint());
-//            telemetry.addData("Intake ColorSensor: ", findColor(IntakeSensor));
-//            telemetry.addData("Left ColorSensor: ", findColor(LeftSensor));
-//            telemetry.addData("Right ColorSensor: ", findColor(RightSensor));
-//            telemetry.addData("Back ColorSensor: ", findColor(BackSensor));
-//
-//            telemetry.addData("Intake ColorSensor hue: ", JavaUtil.colorToHue(IntakeSensor.getNormalizedColors().toColor()));
-//            telemetry.addData("Left ColorSensor hue: ", JavaUtil.colorToHue(LeftSensor.getNormalizedColors().toColor()));
-//            telemetry.addData("Right ColorSensor hue: ", JavaUtil.colorToHue(RightSensor.getNormalizedColors().toColor()));
-//            telemetry.addData("Back ColorSensor hue: ", JavaUtil.colorToHue(BackSensor.getNormalizedColors().toColor()));
-            telemetry.addData("kicker", KickerState);
-            telemetry.addData("scorestate ", ScoreState);
-            telemetry.addData("pathstate", pathState);
-            telemetry.update();
+////            telemetry.addData("x", follower.getPose().getX());
+////            telemetry.addData("y", follower.getPose().getY());
+////            telemetry.addData("heading", follower.getPose().getHeading());
+//            telemetry.addData("overshoot", SpindexerMotor.getCurrentPosition()-SpindexController.getSetPoint());
+////            telemetry.addData("Intake ColorSensor: ", findColor(IntakeSensor));
+////            telemetry.addData("Left ColorSensor: ", findColor(LeftSensor));
+////            telemetry.addData("Right ColorSensor: ", findColor(RightSensor));
+////            telemetry.addData("Back ColorSensor: ", findColor(BackSensor));
+////
+////            telemetry.addData("Intake ColorSensor hue: ", JavaUtil.colorToHue(IntakeSensor.getNormalizedColors().toColor()));
+////            telemetry.addData("Left ColorSensor hue: ", JavaUtil.colorToHue(LeftSensor.getNormalizedColors().toColor()));
+////            telemetry.addData("Right ColorSensor hue: ", JavaUtil.colorToHue(RightSensor.getNormalizedColors().toColor()));
+////            telemetry.addData("Back ColorSensor hue: ", JavaUtil.colorToHue(BackSensor.getNormalizedColors().toColor()));
+//            telemetry.update();
         }
     }
+    public boolean pathtime(int t){
+        if(pathTimer.milliseconds()>t){
+            return true;
+        }
+        return false;
+    }
+
     public void buildPaths(){
-        shootPreloads = follower.pathBuilder()
-                .addPath(new BezierLine(startPose, shootPose))
-                .setLinearHeadingInterpolation(startPose.getHeading(), shootPose.getHeading())
+        Path1 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(125.095, 120.487),
+
+                                new Pose(92.385, 112.672)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(36), Math.toRadians(110))
+
                 .build();
-        intakeHuman = follower.pathBuilder()
-                .addPath(new BezierLine(shootPose, humanPose))
-                .setLinearHeadingInterpolation(shootPose.getHeading(), humanPose.getHeading())
+
+        Path2 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(92.385, 112.672),
+
+                                new Pose(98.000, 102.000)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(110), Math.toRadians(37))
+
                 .build();
-        intakeHuman2 = follower.pathBuilder()
-                .addPath(new BezierLine(humanPose, humanPose2))
-                .setLinearHeadingInterpolation(humanPose.getHeading(), humanPose2.getHeading())
+
+        Path3 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(98.000, 102.000),
+
+                                new Pose(99.383, 83.862)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(37), Math.toRadians(0))
+
                 .build();
-        intakeHuman3 = follower.pathBuilder()
-                .addPath(new BezierLine(humanPose2, humanPose3))
-                .setLinearHeadingInterpolation(humanPose2.getHeading(), humanPose3.getHeading())
+
+        Path4 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(99.383, 83.862),
+
+                                new Pose(126.442, 84.002)
+                        )
+                ).setTangentHeadingInterpolation()
+
                 .build();
-        intakeHuman4 = follower.pathBuilder()
-                .addPath(new BezierLine(humanPose3, humanPose4))
-                .setLinearHeadingInterpolation(humanPose3.getHeading(), humanPose4.getHeading())
+
+        Path5 = follower.pathBuilder().addPath(
+                        new BezierCurve(
+                                new Pose(126.442, 84.002),
+                                new Pose(107.870, 82.431),
+                                new Pose(126.784, 72.758)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-90))
+
                 .build();
-        shootHuman = follower.pathBuilder()
-                .addPath(new BezierLine(humanPose4, shootPose))
-                .setLinearHeadingInterpolation(humanPose4.getHeading(), shootPose.getHeading())
+
+        Path6 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(126.784, 72.758),
+
+                                new Pose(98.083, 102.212)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(-90), Math.toRadians(37))
+
                 .build();
-        leave = follower.pathBuilder()
-                .addPath(new BezierLine(shootPose, leavePose))
-                .setLinearHeadingInterpolation(shootPose.getHeading(), leavePose.getHeading())
+
+        Path7 = follower.pathBuilder().addPath(
+                        new BezierCurve(
+                                new Pose(98.083, 102.212),
+                                new Pose(80.384, 72.931),
+                                new Pose(99.019, 59.127)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(37), Math.toRadians(0))
+
+                .build();
+
+        Path8 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(99.019, 59.127),
+
+                                new Pose(132.444, 58.057)
+                        )
+                ).setTangentHeadingInterpolation()
+
+                .build();
+
+        Path9 = follower.pathBuilder().addPath(
+                        new BezierCurve(
+                                new Pose(132.444, 58.057),
+                                new Pose(95.818, 52.892),
+                                new Pose(98.170, 102.129)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(37))
+
+                .build();
+
+        Path10 = follower.pathBuilder().addPath(
+                        new BezierCurve(
+                                new Pose(98.170, 102.129),
+                                new Pose(83.656, 60.287),
+                                new Pose(89.715, 35.562)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(37), Math.toRadians(0))
+
+                .build();
+
+        Path11 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(89.715, 35.562),
+
+                                new Pose(130.910, 35.454)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
+
+                .build();
+
+        Path12 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(130.910, 35.454),
+
+                                new Pose(91.055, 112.825)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(25))
+
                 .build();
     }
 
@@ -265,7 +411,7 @@ public class RED_FAR_6HP extends LinearOpMode {
     int numOuttakedSorted = 0;
     ElapsedTime ShootTimerSorted = new ElapsedTime();
     int[] motif = new int[] {1,1,2};////////////////////////////////
-    public void ShootSorted(){
+    public boolean ShootSorted(){
         if(ScoreStateSorted == 0){//set up to outtake position
             SpindexSpinToClosestOuttake();
             numOuttakedSorted = 0;
@@ -306,6 +452,7 @@ public class RED_FAR_6HP extends LinearOpMode {
         }else if(ScoreStateSorted == 8){//spin to next chamber
             if(numOuttakedSorted == 3){//exit after 3 balls shot
                 ScoreStateSorted = 99;
+                return true;
             }else{
                 SpindexSpinToColor(motif[numOuttakedSorted]);
                 ScoreStateSorted = 9;
@@ -320,6 +467,7 @@ public class RED_FAR_6HP extends LinearOpMode {
                 ScoreStateSorted = 6;//loop back to kick
             }
         }
+        return false;
     }
 
     int ScoreState = 0;
@@ -331,7 +479,7 @@ public class RED_FAR_6HP extends LinearOpMode {
             numOuttaked = 0;
             ScoreState = 1;
         }else if(ScoreState == 1){//wait until at tolerance
-            if(SpindexWithinTolerance(1000)){
+            if(SpindexWithinTolerance(800)){
                 ShootTimer.reset();
                 ScoreState = 2;
             }
@@ -358,7 +506,7 @@ public class RED_FAR_6HP extends LinearOpMode {
                 ScoreState = 6;
             }
         }else if(ScoreState == 6){//wait until at tolerance
-            if(SpindexWithinTolerance(1000)){
+            if(SpindexWithinTolerance(800)){
                 ShootTimer.reset();
                 ScoreState = 7;
             }
@@ -371,49 +519,39 @@ public class RED_FAR_6HP extends LinearOpMode {
     }
 
     int numIntaked = 0;
+    ElapsedTime IntakeTimer = new ElapsedTime();
     public boolean Intake(){
         if(IntakeState == 0){
             SpindexSpinToClosestIntake();//set up for intaking
             if(SpindexWithinTolerance()){
                 IntakeState = 1;
-                numIntaked = 0;
             }
-        }else if(IntakeState == 1){
-            if(detectColor(IntakeSensor) && SpindexWithinTolerance() && numIntaked<3){
-                SpindexIncrementIntake(2);//if detect something and we have less than 3 balls
-                numIntaked++;//move chamber
+        }else if(IntakeState == 1) {
+            if (detectColor(IntakeSensor) && SpindexWithinTolerance(500)) {
+                SpindexIncrementIntake(2);
             }
-            if(numIntaked<3){//turn intake on
-                IntakeMotor.setPower(0.7);
-                IntakeActive = true;
-            }else{
-                IntakeActive = false;
-                SpindexSpinToClosestOuttake();//ready for outtaking
-                IntakeState = 99;
-                return true;
-            }
+            IntakeMotor.setPower(0.9);
+            IntakeActive = true;
         }
         return false;
     }
+    int prevInc = 0;
     public boolean SpindexSpinToColor(int color){
         //1 = purple
         //2 = green
         if(findColor(BackSensor) == color){
+            prevInc = 2;
             return true;
         }else if(findColor(RightSensor) == color){
+            prevInc = 2;
             SpindexIncrementOuttake(2);
             return true;
         }else if(findColor(LeftSensor) == color){
+            prevInc = -2;
             SpindexIncrementOuttake(-2);
             return true;
-        }
-
-        else{//spin to one with empty
-            if(findColor(RightSensor)==0){
-                SpindexIncrementOuttake(2);
-            }else if(findColor(LeftSensor)==0){
-                SpindexIncrementOuttake(-2);
-            }
+        }else{//spin to one with empty
+            SpindexIncrementOuttake(prevInc);
         }
         return false;
     }
@@ -431,7 +569,7 @@ public class RED_FAR_6HP extends LinearOpMode {
     }
 
     public boolean SpindexWithinTolerance(){
-        if(Math.abs(SpindexController.getSetPoint()-SpindexerMotor.getCurrentPosition())<320){
+        if(Math.abs(SpindexController.getSetPoint()-SpindexerMotor.getCurrentPosition())<600){
             return true;
         }
         return false;
@@ -488,22 +626,35 @@ public class RED_FAR_6HP extends LinearOpMode {
 
     public void kickSM(){
         if(KickerState == 0){
-            KickerServo.setPosition(1);//low position
+            KickerServo.setPosition(0.5);//low position
         }else if(KickerState == 1){
-            KickerServo.setPosition(0.5);//high position
+            KickerServo.setPosition(0.1);//high position
             KickerTimer.reset();
             KickerState = 2;//ready to wait
         }else if(KickerState == 2){
-            if(KickerTimer.milliseconds()>250){//time needed to move up has passed
-                KickerServo.setPosition(1);//low position
+            if(KickerTimer.milliseconds()>150){//time needed to move up has passed
+                KickerServo.setPosition(0.5);//low position
                 KickerTimer.reset();
                 KickerState = 3;
             }
         }else if(KickerState == 3) {
-            if (KickerTimer.milliseconds() > 150) {//cooldown period has passed
+            if (KickerTimer.milliseconds() > 20) {//cooldown period has passed
                 KickerState = 0;
             }
         }
+    }
+    public boolean detection(){
+        int lockedtag = -1;
+        int tag = detectTag();
+
+        if(lockedtag != -1){
+            return true;
+        }
+        if(solveMotif(tag).length == 3){
+            motif = solveMotif(tag);
+            return true;
+        }
+        return false;
     }
 
     public int detectTag() {
@@ -524,16 +675,16 @@ public class RED_FAR_6HP extends LinearOpMode {
         //ID# 21 = gpp
         //22 = pgp
         //23 = ppg
-        int[] motif = new int[] {0,0,0};
+        int[] thismotif = new int[] {0};
         if(selectedTagId == 21){
-            motif = new int[] {2,1,1};//gpp
+            thismotif = new int[] {2,1,1};//gpp
         }else if(selectedTagId == 22){
-            motif = new int[] {1,2,1};//pgp
+            thismotif = new int[] {1,2,1};//pgp
         }else if(selectedTagId == 23){
-            motif = new int[] {1,1,2};//ppg
+            thismotif = new int[] {1,1,2};//ppg
         }
 
-        return motif;
+        return thismotif;
     }
 
     public void motorConfigs(){
@@ -550,7 +701,8 @@ public class RED_FAR_6HP extends LinearOpMode {
 //        LeftRear.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
 //        LeftFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         SpindexerMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        SpindexerMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        SpindexerMotor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        SpindexerMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         RightFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         RightRear.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);

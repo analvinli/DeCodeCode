@@ -65,7 +65,7 @@ public class Auto1 extends LinearOpMode {
 
     boolean IntakeActive = false;
     int velocity = 0;
-    PIDFController SpindexController = new PIDFController(0.00024,0,0.00001,0);
+    PIDFController SpindexController = new PIDFController(0.00031,0,0.00001,0);
     //PIDFController SpindexController = new PIDFController(0.00024,0,0.00001,0);
 
 
@@ -93,7 +93,6 @@ public class Auto1 extends LinearOpMode {
     public PathChain Path10;
     public PathChain Path11;
     public PathChain Path12;
-    public PathChain Path13;
 
     public void runOpMode() {
         //HARDWARE MAPPING
@@ -128,9 +127,6 @@ public class Auto1 extends LinearOpMode {
         SpindexIncrementOuttake(2);
         int x = 0;
         while (opModeIsActive()) {
-
-
-
             if(pathState == 0){//start
                 velocity = 1150;//start up flywheel
                 HoodServo.setPosition(0);
@@ -138,19 +134,18 @@ public class Auto1 extends LinearOpMode {
                 pathState++;
                 pathTimer.reset();
             }else if(pathState == 1){//wait until at read position
-                motif = solveMotif(detectTag());
-                telemetry.addData("detect", detectTag());
-                telemetry.addData("motif0", motif[0]);
-                telemetry.addData("motif1", motif[1]);
-                telemetry.addData("motif2", motif[2]);
-
-                if(!follower.isBusy() && pathtime(1000)){
+                if(detection()){
+                    follower.followPath(Path2);//move to scoring pos
+                    pathState++;
+                    pathTimer.reset();
+                }else if(!follower.isBusy() && pathtime(3000)){
+                    motif = new int[] {1,1,2};
                     follower.followPath(Path2);//move to scoring pos
                     pathState++;
                     pathTimer.reset();
                 }
             }else if(pathState == 2){//moving to scoring pos
-                if(!follower.isBusy()){//at scoring position
+                if(!follower.isBusy() && pathtime(1500)){//at scoring position
                     if(ShootUnsorted()){//shoot
                         pathState++;
                         velocity = 0;
@@ -160,20 +155,31 @@ public class Auto1 extends LinearOpMode {
                 }
             }else if(pathState == 3){//moving to intake position
                 Intake();
-                if(!follower.isBusy() && pathtime(1000)){//at start of intake
-                    follower.followPath(Path4,0.5,true);//move to end of intake
+                if(!follower.isBusy() && pathtime(500)){//at start of intake
+                    follower.followPath(Path4,0.4,true);//move to end of intake
+                    IntakeState = 0;
                     pathState++;
                     pathTimer.reset();
                 }
             }else if(pathState == 4){//moving to end of intake position
                 Intake();
-                if(!follower.isBusy() && pathtime(1500)){//at end of intake position
-                    follower.followPath(Path5,0.6,true);//move to gate pos
-                    pathState++;
+                if(!follower.isBusy() && pathtime(500)){//at end of intake position
+                    follower.followPath(Path5);//move to gate pos
+                    pathState = 222;
                     pathTimer.reset();
                 }
-            }else if(pathState == 5){//moving to gate pos
-                if(!follower.isBusy() && pathtime(3000)){//at gate position
+            }else if(pathState == 222){
+                Intake();
+                if(!follower.isBusy()){
+                    pathState = 5;
+                    pathTimer.reset();
+                }else if(pathTimer.milliseconds()>500){
+                    pathState = 5;
+                    pathTimer.reset();
+                }
+            }
+            else if(pathState == 5){//moving to gate pos
+                if(!follower.isBusy() && pathtime(1500)){//at gate position
                     pathState++;
                     velocity = 1150;//rev flywheel
                     follower.followPath(Path6);//move to shoot pos
@@ -181,68 +187,65 @@ public class Auto1 extends LinearOpMode {
                     pathTimer.reset();
                 }
             }else if(pathState == 6){//moving to shoot pos
-                if(!follower.isBusy() && pathtime(1000)){//at shoot pos
+                if(!follower.isBusy() && pathtime(500)){//at shoot pos
                     if(ShootSorted()){//when done shooting
                         velocity = 0;
                         follower.followPath(Path7);//move to 2nd intake pos
                         pathState++;
+                        IntakeState = 0;
                         pathTimer.reset();
                     }
                 }
             }else if(pathState == 7){//moving to 2nd intake pos
                 Intake();
-                if(!follower.isBusy() && pathtime(1000)){//at 2nd intake pos
-                    follower.followPath(Path8,0.5,true);//move to end of 2nd intake
+                if(!follower.isBusy() && pathtime(500)){//at 2nd intake pos
+                    follower.followPath(Path8,0.6,true);//move to end of 2nd intake
                     pathState++;
                     pathTimer.reset();
                 }
             }else if(pathState == 8){//moving to 2nd intake
                 Intake();
-                if(!follower.isBusy() && pathtime(1500)){//at end of 2nd intake
+                if(!follower.isBusy() && pathtime(500)){//at end of 2nd intake
                     follower.followPath(Path9);//move to shoot pos
-                    velocity = 1150;//rev flywheel
+                    velocity = 1100;//rev flywheel
                     pathState++;
                     pathTimer.reset();
                     ScoreStateSorted = 0;
                 }
             }else if(pathState == 9){//moving to shooting pos
-                if(!follower.isBusy() && pathtime(1000)){//at shoot pos
+                if(!follower.isBusy() && pathtime(500)){//at shoot pos
                     if(ShootSorted()){//when done shooting
                         velocity = 0;
                         follower.followPath(Path10);//move to 3rd intake pos
                         pathState++;
+                        IntakeState = 0;
                         pathTimer.reset();
                     }
                 }
             }else if(pathState == 10){//moving to 3rd intake
                 Intake();
-                if(!follower.isBusy() && pathtime(2000)){//at 3rd intake
-                    follower.followPath(Path11,0.5,true);//go to end of 3rd intake pos
+                if(!follower.isBusy() && pathtime(500)){//at 3rd intake
+                    follower.followPath(Path11,0.6,true);//go to end of 3rd intake pos
                     IntakeState = 0;
                     pathState++;
                     pathTimer.reset();
                 }
             }else if(pathState == 11){//moving to end of 3rd intake pos
                 Intake();
-                if(!follower.isBusy() && pathtime(1000)){//at end of 3rd intake
-                    follower.followPath(Path12);//move to shoot pos in a line
+                if(!follower.isBusy() && pathtime(500)){//at end of 3rd intake
+                    follower.followPath(Path12,1,true);//move to shoot pos in a line
                     velocity = 1150;
                     ScoreStateSorted = 0;
                     pathState++;
                     pathTimer.reset();
                 }
             }else if(pathState == 12){//moving to shoot pos
-                if(!follower.isBusy() && pathtime(1000)){//at shoot pos
-                    follower.followPath(Path13);//turn to score pose
-                    pathState++;
-                    pathTimer.reset();
-                }
-            }else if(pathState == 13){//turning to score pose
-                if(!follower.isBusy() && pathtime(1000)){//at score pos
+                if(!follower.isBusy() && pathtime(500)){//at score pos
                     if(ShootSorted()){
                         velocity = 0;
                         pathState++;
                         pathTimer.reset();
+                        break;
                     }
                 }
             }
@@ -254,6 +257,10 @@ public class Auto1 extends LinearOpMode {
             SpindexSM();
             FlywheelSM(velocity);
 
+            telemetry.addData("detect", detectTag());
+            telemetry.addData("motif0", motif[0]);
+            telemetry.addData("motif1", motif[1]);
+            telemetry.addData("motif2", motif[2]);
             telemetry.addData("path state", pathState);
 //            telemetry.addData("x", follower.getPose().getX());
 //            telemetry.addData("y", follower.getPose().getY());
@@ -283,21 +290,19 @@ public class Auto1 extends LinearOpMode {
                         new BezierLine(
                                 new Pose(125.095, 120.487),
 
-                                new Pose(98.326, 102.530)
+                                new Pose(92.385, 112.672)
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(36), Math.toRadians(110))
-                .setBrakingStart(0.4)
 
                 .build();
 
         Path2 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(98.326, 102.530),
+                                new Pose(92.385, 112.672),
 
                                 new Pose(98.000, 102.000)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(110), Math.toRadians(43))
-                .setBrakingStart(0.4)
+                ).setLinearHeadingInterpolation(Math.toRadians(110), Math.toRadians(37))
 
                 .build();
 
@@ -305,43 +310,39 @@ public class Auto1 extends LinearOpMode {
                         new BezierLine(
                                 new Pose(98.000, 102.000),
 
-                                new Pose(101.222, 83.862)
+                                new Pose(99.383, 83.862)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(43), Math.toRadians(0))
-                .setBrakingStart(0.4)
+                ).setLinearHeadingInterpolation(Math.toRadians(37), Math.toRadians(0))
 
                 .build();
 
         Path4 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(101.222, 83.862),
+                                new Pose(99.383, 83.862),
 
-                                new Pose(125.028, 84.002)
+                                new Pose(126.442, 84.002)
                         )
                 ).setTangentHeadingInterpolation()
-                .setBrakingStart(0.4)
 
                 .build();
 
         Path5 = follower.pathBuilder().addPath(
                         new BezierCurve(
-                                new Pose(125.028, 84.002),
-                                new Pose(108.719, 78.046),
-                                new Pose(127.774, 70.91944990176817)
+                                new Pose(126.442, 84.002),
+                                new Pose(107.870, 82.431),
+                                new Pose(126.784, 72.758)
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-90))
-                .setBrakingStart(0.4)
 
                 .build();
 
         Path6 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(127.774, 76.012),
+                                new Pose(126.784, 72.758),
 
                                 new Pose(98.083, 102.212)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(-90), Math.toRadians(43))
-                .setBrakingStart(0.4)
+                ).setLinearHeadingInterpolation(Math.toRadians(-90), Math.toRadians(37))
 
                 .build();
 
@@ -349,76 +350,59 @@ public class Auto1 extends LinearOpMode {
                         new BezierCurve(
                                 new Pose(98.083, 102.212),
                                 new Pose(80.384, 72.931),
-                                new Pose(100.150, 59.410)
+                                new Pose(99.019, 59.127)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(43), Math.toRadians(0))
-                .setBrakingStart(0.4)
+                ).setLinearHeadingInterpolation(Math.toRadians(37), Math.toRadians(0))
 
                 .build();
 
         Path8 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(100.150, 59.410),
+                                new Pose(99.019, 59.127),
 
-                                new Pose(124.523, 59.047)
+                                new Pose(132.444, 58.057)
                         )
                 ).setTangentHeadingInterpolation()
-                .setBrakingStart(0.4)
 
                 .build();
 
         Path9 = follower.pathBuilder().addPath(
                         new BezierCurve(
-                                new Pose(124.523, 59.047),
+                                new Pose(132.444, 58.057),
                                 new Pose(95.818, 52.892),
                                 new Pose(98.170, 102.129)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(43))
-                .setBrakingStart(0.4)
+                ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(37))
 
                 .build();
 
         Path10 = follower.pathBuilder().addPath(
                         new BezierCurve(
                                 new Pose(98.170, 102.129),
-                                new Pose(77.376, 58.419),
-                                new Pose(96.646, 35.138)
+                                new Pose(83.656, 60.287),
+                                new Pose(89.715, 35.562)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(43), Math.toRadians(0))
-                .setBrakingStart(0.4)
+                ).setLinearHeadingInterpolation(Math.toRadians(37), Math.toRadians(0))
 
                 .build();
 
         Path11 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(96.646, 35.138),
+                                new Pose(89.715, 35.562),
 
-                                new Pose(125.422, 35.595)
+                                new Pose(130.910, 35.454)
                         )
-                ).setTangentHeadingInterpolation()
-                .setBrakingStart(0.4)
+                ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
 
                 .build();
 
         Path12 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(125.422, 35.595),
+                                new Pose(130.910, 35.454),
 
                                 new Pose(91.055, 112.825)
                         )
-                ).setTangentHeadingInterpolation()
-                .setBrakingStart(0.4)
-                .setReversed()
-                .build();
-
-        Path13 = follower.pathBuilder().addPath(
-                        new BezierLine(
-                                new Pose(91.055, 112.825),
-
-                                new Pose(90.992, 112.786)
-                        )
-                ).setLinearHeadingInterpolation(Math.toRadians(-68), Math.toRadians(33))
-                .setBrakingStart(0.8)
+                ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(25))
 
                 .build();
     }
@@ -495,7 +479,7 @@ public class Auto1 extends LinearOpMode {
             numOuttaked = 0;
             ScoreState = 1;
         }else if(ScoreState == 1){//wait until at tolerance
-            if(SpindexWithinTolerance(1000)){
+            if(SpindexWithinTolerance(800)){
                 ShootTimer.reset();
                 ScoreState = 2;
             }
@@ -522,7 +506,7 @@ public class Auto1 extends LinearOpMode {
                 ScoreState = 6;
             }
         }else if(ScoreState == 6){//wait until at tolerance
-            if(SpindexWithinTolerance(1000)){
+            if(SpindexWithinTolerance(1200)){
                 ShootTimer.reset();
                 ScoreState = 7;
             }
@@ -535,47 +519,39 @@ public class Auto1 extends LinearOpMode {
     }
 
     int numIntaked = 0;
+    ElapsedTime IntakeTimer = new ElapsedTime();
     public boolean Intake(){
         if(IntakeState == 0){
             SpindexSpinToClosestIntake();//set up for intaking
             if(SpindexWithinTolerance()){
                 IntakeState = 1;
-                numIntaked = 0;
             }
-        }else if(IntakeState == 1){
-            if(detectColor(IntakeSensor) && SpindexWithinTolerance() && numIntaked<3){
-                SpindexIncrementIntake(2);//if detect something and we have less than 3 balls
-                numIntaked++;//move chamber
+        }else if(IntakeState == 1) {
+            if (detectColor(IntakeSensor) && SpindexWithinTolerance(500)) {
+                SpindexIncrementIntake(2);
             }
-            if(numIntaked<3){//turn intake on
-                IntakeMotor.setPower(0.7);
-                IntakeActive = true;
-            }else{
-                IntakeActive = false;
-                SpindexSpinToClosestOuttake();//ready for outtaking
-                IntakeState = 99;
-                return true;
-            }
+            IntakeMotor.setPower(0.9);
+            IntakeActive = true;
         }
         return false;
     }
+    int prevInc = 0;
     public boolean SpindexSpinToColor(int color){
         //1 = purple
         //2 = green
         if(findColor(BackSensor) == color){
+            prevInc = 2;
             return true;
         }else if(findColor(RightSensor) == color){
+            prevInc = 2;
             SpindexIncrementOuttake(2);
             return true;
         }else if(findColor(LeftSensor) == color){
+            prevInc = -2;
             SpindexIncrementOuttake(-2);
             return true;
         }else{//spin to one with empty
-            if(findColor(RightSensor)==0){
-                SpindexIncrementOuttake(2);
-            }else if(findColor(LeftSensor)==0){
-                SpindexIncrementOuttake(-2);
-            }
+            SpindexIncrementOuttake(prevInc);
         }
         return false;
     }
@@ -593,7 +569,7 @@ public class Auto1 extends LinearOpMode {
     }
 
     public boolean SpindexWithinTolerance(){
-        if(Math.abs(SpindexController.getSetPoint()-SpindexerMotor.getCurrentPosition())<320){
+        if(Math.abs(SpindexController.getSetPoint()-SpindexerMotor.getCurrentPosition())<600){
             return true;
         }
         return false;
@@ -652,11 +628,11 @@ public class Auto1 extends LinearOpMode {
         if(KickerState == 0){
             KickerServo.setPosition(0.5);//low position
         }else if(KickerState == 1){
-            KickerServo.setPosition(0.2);//high position
+            KickerServo.setPosition(0.1);//high position
             KickerTimer.reset();
             KickerState = 2;//ready to wait
         }else if(KickerState == 2){
-            if(KickerTimer.milliseconds()>100){//time needed to move up has passed
+            if(KickerTimer.milliseconds()>150){//time needed to move up has passed
                 KickerServo.setPosition(0.5);//low position
                 KickerTimer.reset();
                 KickerState = 3;
@@ -666,6 +642,19 @@ public class Auto1 extends LinearOpMode {
                 KickerState = 0;
             }
         }
+    }
+    public boolean detection(){
+        int lockedtag = -1;
+        int tag = detectTag();
+
+        if(lockedtag != -1){
+            return true;
+        }
+        if(solveMotif(tag).length == 3){
+            motif = solveMotif(tag);
+            return true;
+        }
+        return false;
     }
 
     public int detectTag() {
@@ -686,16 +675,16 @@ public class Auto1 extends LinearOpMode {
         //ID# 21 = gpp
         //22 = pgp
         //23 = ppg
-        int[] motif = new int[] {0,0,0};
+        int[] thismotif = new int[] {0};
         if(selectedTagId == 21){
-            motif = new int[] {2,1,1};//gpp
+            thismotif = new int[] {2,1,1};//gpp
         }else if(selectedTagId == 22){
-            motif = new int[] {1,2,1};//pgp
+            thismotif = new int[] {1,2,1};//pgp
         }else if(selectedTagId == 23){
-            motif = new int[] {1,1,2};//ppg
+            thismotif = new int[] {1,1,2};//ppg
         }
 
-        return motif;
+        return thismotif;
     }
 
     public void motorConfigs(){
@@ -712,7 +701,8 @@ public class Auto1 extends LinearOpMode {
 //        LeftRear.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
 //        LeftFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         SpindexerMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        SpindexerMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        SpindexerMotor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        SpindexerMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         RightFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         RightRear.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);

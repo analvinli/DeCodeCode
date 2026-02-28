@@ -249,6 +249,8 @@ public class BLUE_CLOSE_12S extends LinearOpMode {
                         pathTimer.reset();
                         break;
                     }
+                }else{
+                    Intake();
                 }
             }
 

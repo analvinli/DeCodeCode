@@ -242,6 +242,7 @@ public class RED_CLOSE_12S extends LinearOpMode {
                     pathTimer.reset();
                 }
             }else if(pathState == 12){//moving to shoot pos
+                Intake();
                 if(!follower.isBusy() && pathtime(500)){//at score pos
                     if(ShootSorted()){
                         velocity = 0;
@@ -249,6 +250,8 @@ public class RED_CLOSE_12S extends LinearOpMode {
                         pathTimer.reset();
                         break;
                     }
+                }else{
+                    Intake();
                 }
             }
 

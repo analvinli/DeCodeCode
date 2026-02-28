@@ -85,6 +85,7 @@ public class RED_FAR_6HP extends LinearOpMode {
     public PathChain Path2;
     public PathChain Path3;
     public PathChain Path4;
+    public PathChain Path5;
 
     public void runOpMode() {
         //HARDWARE MAPPING
@@ -153,7 +154,7 @@ public class RED_FAR_6HP extends LinearOpMode {
                 }
             }else if(pathState == 4){
                 Intake();
-                if(!follower.isBusy() && FlywheelGood() && pathtime(1600)){//at scoring position
+                if(!follower.isBusy() && FlywheelGood() && pathtime(1800)){//at scoring position
                     pathState++;
                     ScoreState = 0;
                 }
@@ -161,6 +162,14 @@ public class RED_FAR_6HP extends LinearOpMode {
                 if(ShootUnsorted()){//shoot
                     pathState++;
                     velocity = 0;
+
+                }
+            }else if(pathState == 6){
+                follower.followPath(Path5);
+                pathState++;
+            }else if(pathState == 7){
+                if(!follower.isBusy()){
+                    pathState++;
                     break;
                 }
             }
@@ -236,6 +245,15 @@ public class RED_FAR_6HP extends LinearOpMode {
                                 new Pose(88.000, 12.000)
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(70))
+
+                .build();
+        Path5 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(88.000, 12.000),
+
+                                new Pose(132.711, 13.688)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(70), Math.toRadians(0))
 
                 .build();
     }

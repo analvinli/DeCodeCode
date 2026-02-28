@@ -136,6 +136,7 @@ public class RED_CLOSE_12S extends LinearOpMode {
                 pathTimer.reset();
             }else if(pathState == 1){//wait until at read position
                 if(detection()){
+                    visionPortal.close();
                     follower.followPath(Path2);//move to scoring pos
                     pathState++;
                     pathTimer.reset();

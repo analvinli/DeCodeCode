@@ -130,6 +130,7 @@ public class RED_CLOSE_12S extends LinearOpMode {
             if(pathState == 0){//start
                 velocity = 1150;//start up flywheel
                 HoodServo.setPosition(0);
+                SpindexController.setSetPoint(0);
                 follower.followPath(Path1);//move to read pos
                 pathState++;
                 pathTimer.reset();
@@ -332,7 +333,7 @@ public class RED_CLOSE_12S extends LinearOpMode {
                                 new Pose(107.870, 82.431),
                                 new Pose(126.784, 72.758)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-90))
+                ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(90))
 
                 .build();
 
@@ -342,7 +343,7 @@ public class RED_CLOSE_12S extends LinearOpMode {
 
                                 new Pose(98.083, 102.212)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(-90), Math.toRadians(37))
+                ).setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(37))
 
                 .build();
 

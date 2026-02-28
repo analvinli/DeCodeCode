@@ -131,6 +131,7 @@ public class BLUE_CLOSE_12S extends LinearOpMode {
                 velocity = 1150;//start up flywheel
                 HoodServo.setPosition(0);
                 follower.followPath(Path1);//move to read pos
+                SpindexController.setSetPoint(0);
                 pathState++;
                 pathTimer.reset();
             }else if(pathState == 1){//wait until at read position
@@ -310,7 +311,7 @@ public class BLUE_CLOSE_12S extends LinearOpMode {
                         new BezierLine(
                                 new Pose(46.000, 102.000),
 
-                                new Pose(48.719, 84.004)
+                                new Pose(47.022, 84.145)
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(143), Math.toRadians(180))
 
@@ -318,9 +319,9 @@ public class BLUE_CLOSE_12S extends LinearOpMode {
 
         Path4 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(48.719, 84.004),
+                                new Pose(47.022, 84.145),
 
-                                new Pose(17.558, 84.002)
+                                new Pose(18.407, 84.002)
                         )
                 ).setTangentHeadingInterpolation()
 
@@ -328,21 +329,21 @@ public class BLUE_CLOSE_12S extends LinearOpMode {
 
         Path5 = follower.pathBuilder().addPath(
                         new BezierCurve(
-                                new Pose(17.558, 84.002),
-                                new Pose(45.607, 84.836),
-                                new Pose(17.075, 72.334)
+                                new Pose(18.407, 84.002),
+                                new Pose(36.413, 78.471),
+                                new Pose(16.509, 74.597)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(270))
+                ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(90))
 
                 .build();
 
         Path6 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(17.075, 72.334),
+                                new Pose(16.509, 74.597),
 
                                 new Pose(45.917, 102.212)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(270), Math.toRadians(143))
+                ).setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(143))
 
                 .build();
 
@@ -350,7 +351,7 @@ public class BLUE_CLOSE_12S extends LinearOpMode {
                         new BezierCurve(
                                 new Pose(45.917, 102.212),
                                 new Pose(63.616, 72.931),
-                                new Pose(44.981, 59.127)
+                                new Pose(44.415, 60.258)
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(143), Math.toRadians(180))
 
@@ -358,9 +359,9 @@ public class BLUE_CLOSE_12S extends LinearOpMode {
 
         Path8 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(44.981, 59.127),
+                                new Pose(44.415, 60.258),
 
-                                new Pose(11.556, 58.057)
+                                new Pose(13.678, 59.472)
                         )
                 ).setTangentHeadingInterpolation()
 
@@ -368,7 +369,7 @@ public class BLUE_CLOSE_12S extends LinearOpMode {
 
         Path9 = follower.pathBuilder().addPath(
                         new BezierCurve(
-                                new Pose(11.556, 58.057),
+                                new Pose(13.678, 59.472),
                                 new Pose(48.182, 52.892),
                                 new Pose(45.830, 102.129)
                         )
@@ -380,7 +381,7 @@ public class BLUE_CLOSE_12S extends LinearOpMode {
                         new BezierCurve(
                                 new Pose(45.830, 102.129),
                                 new Pose(60.344, 60.287),
-                                new Pose(54.285, 35.562)
+                                new Pose(54.002, 36.835)
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(143), Math.toRadians(180))
 
@@ -388,9 +389,9 @@ public class BLUE_CLOSE_12S extends LinearOpMode {
 
         Path11 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(54.285, 35.562),
+                                new Pose(54.002, 36.835),
 
-                                new Pose(13.090, 35.454)
+                                new Pose(15.212, 36.161)
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
 
@@ -398,7 +399,7 @@ public class BLUE_CLOSE_12S extends LinearOpMode {
 
         Path12 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(13.090, 35.454),
+                                new Pose(15.212, 36.161),
 
                                 new Pose(52.945, 112.825)
                         )
@@ -479,7 +480,7 @@ public class BLUE_CLOSE_12S extends LinearOpMode {
             numOuttaked = 0;
             ScoreState = 1;
         }else if(ScoreState == 1){//wait until at tolerance
-            if(SpindexWithinTolerance(800)){
+            if(SpindexWithinTolerance(200)){
                 ShootTimer.reset();
                 ScoreState = 2;
             }
@@ -506,7 +507,7 @@ public class BLUE_CLOSE_12S extends LinearOpMode {
                 ScoreState = 6;
             }
         }else if(ScoreState == 6){//wait until at tolerance
-            if(SpindexWithinTolerance(800)){
+            if(SpindexWithinTolerance(200)){
                 ShootTimer.reset();
                 ScoreState = 7;
             }
@@ -569,7 +570,7 @@ public class BLUE_CLOSE_12S extends LinearOpMode {
     }
 
     public boolean SpindexWithinTolerance(){
-        if(Math.abs(SpindexController.getSetPoint()-SpindexerMotor.getCurrentPosition())<600){
+        if(Math.abs(SpindexController.getSetPoint()-SpindexerMotor.getCurrentPosition())<200){
             return true;
         }
         return false;
@@ -599,7 +600,8 @@ public class BLUE_CLOSE_12S extends LinearOpMode {
         }else{
             IntakeMotor.setPower(0.7);
             double raw = SpindexController.calculate(SpindexerMotor.getCurrentPosition());
-            SpindexerMotor.setPower(raw+(Math.signum(raw)*0.06));
+            raw = raw+(Math.signum(raw)*0.06);
+            SpindexerMotor.setPower(raw);
         }
     }
     public int FlywheelSM(int v){

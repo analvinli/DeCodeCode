@@ -17,8 +17,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "RedTele")
-public class tele extends LinearOpMode {
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "RESET_SPINDEX")
+public class RESETSPINDEXENCODER extends LinearOpMode {
     //Drivetrain
     DcMotorEx RightFront;
     DcMotorEx RightRear;
@@ -366,7 +366,7 @@ public class tele extends LinearOpMode {
 //        RightRear.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
 //        LeftRear.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
 //        LeftFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        //SpindexerMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        SpindexerMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         SpindexerMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         RightFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);

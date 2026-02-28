@@ -120,7 +120,7 @@ public class bluetele extends LinearOpMode {
             double targetY = 135;
 
             //double angle = Math.atan2(targetY - posY, targetX - posX);
-            double angle = Math.toRadians(23);
+            double angle = Math.toRadians(24.5);
             //telemetry.addData("angle", angle);
             double angleError = AngleUnit.normalizeRadians(angle - heading);
             if(gamepad1.dpadUpWasPressed()){
@@ -366,7 +366,7 @@ public class bluetele extends LinearOpMode {
 //        RightRear.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
 //        LeftRear.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
 //        LeftFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        SpindexerMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        //SpindexerMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         SpindexerMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         RightFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);

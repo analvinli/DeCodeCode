@@ -29,7 +29,7 @@ import java.util.List;
 import com.pedropathing.follower.Follower;
 
 
-@Autonomous(name = "RED_FAR_6HP")
+@Autonomous(name = "🔴 RED far 6hp")
 public class RED_FAR_6HP extends LinearOpMode {
     //Drivetrain
     DcMotorEx RightFront;
@@ -147,14 +147,16 @@ public class RED_FAR_6HP extends LinearOpMode {
             }else if(pathState == 3){
                 Intake();
                 if(!follower.isBusy() || pathtime(1500)){
+                    pathState = 222;
                     follower.followPath(Path4);
                     velocity = 1570;
                     pathTimer.reset();
                     pathState++;
                 }
-            }else if(pathState == 4){
-                Intake();
-                if(!follower.isBusy() && FlywheelGood() && pathtime(1800)){//at scoring position
+            }
+            else if(pathState == 4){
+                    Intake();
+                    if(!follower.isBusy() && FlywheelGood() && pathtime(1800)){//at scoring position
                     pathState++;
                     ScoreState = 0;
                 }
@@ -164,7 +166,8 @@ public class RED_FAR_6HP extends LinearOpMode {
                     velocity = 0;
 
                 }
-            }else if(pathState == 6){
+            }
+            else if(pathState == 6){
                 follower.followPath(Path5);
                 pathState++;
             }else if(pathState == 7){

@@ -29,8 +29,8 @@ import java.util.List;
 import com.pedropathing.follower.Follower;
 
 
-@Autonomous(name = "🔵 BLUE far 6hp")
-public class BLUE_FAR_6HP extends LinearOpMode {
+@Autonomous(name = "🔴 RED far 3hp")
+public class RED_FAR_3HP extends LinearOpMode {
     //Drivetrain
     DcMotorEx RightFront;
     DcMotorEx RightRear;
@@ -79,7 +79,7 @@ public class BLUE_FAR_6HP extends LinearOpMode {
     private ElapsedTime opmodeTimer;
     private int pathState;
 
-    private final Pose startPose = new Pose(47.62, 8.88, Math.toRadians(90));
+    private final Pose startPose = new Pose(96.38, 8.88, Math.toRadians(90));
 
     public PathChain Path1;
     public PathChain Path2;
@@ -147,23 +147,16 @@ public class BLUE_FAR_6HP extends LinearOpMode {
                 Intake();
                 if(!follower.isBusy() || pathtime(1500)){
                     follower.followPath(Path4);
-                    velocity = 1570;
                     pathTimer.reset();
                     pathState++;
                 }
             }else if(pathState == 4){
-                Intake();
-                if(!follower.isBusy() && FlywheelGood() && pathtime(1600)){//at scoring position
+                if(!follower.isBusy()){
                     pathState++;
-                    ScoreState = 0;
-                }
-            }else if(pathState == 5){
-                if(ShootUnsorted()){//shoot
-                    pathState++;
-                    velocity = 0;
                     break;
                 }
             }
+
 
             follower.update();
             kickSM();
@@ -201,41 +194,41 @@ public class BLUE_FAR_6HP extends LinearOpMode {
     public void buildPaths(){
         Path1 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(47.620, 8.880),
+                                new Pose(96.380, 8.880),
 
-                                new Pose(56.000, 12.000)
+                                new Pose(88.000, 12.000)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(110))
+                ).setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(70))
 
                 .build();
 
         Path2 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(56.000, 12.000),
+                                new Pose(88.000, 12.000),
 
-                                new Pose(12.099, 16.088)
+                                new Pose(131.901, 16.088)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(110), Math.toRadians(200))
+                ).setLinearHeadingInterpolation(Math.toRadians(70), Math.toRadians(-20))
 
                 .build();
 
         Path3 = follower.pathBuilder().addPath(
                         new BezierCurve(
-                                new Pose(12.099, 16.088),
-                                new Pose(22.807, 8.892),
-                                new Pose(11.307, 9.456)
+                                new Pose(131.901, 16.088),
+                                new Pose(121.193, 8.892),
+                                new Pose(132.693, 9.456)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(200), Math.toRadians(180))
+                ).setLinearHeadingInterpolation(Math.toRadians(-20), Math.toRadians(0))
 
                 .build();
 
         Path4 = follower.pathBuilder().addPath(
-                        new BezierCurve(
-                                new Pose(11.307, 9.456),
-                                new Pose(29.335, 17.642),
-                                new Pose(56.000, 12.000)
+                        new BezierLine(
+                                new Pose(132.693, 9.456),
+
+                                new Pose(120.534, 9.332)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(110))
+                ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
 
                 .build();
     }
@@ -339,12 +332,12 @@ public class BLUE_FAR_6HP extends LinearOpMode {
                 ScoreState = 6;
             }
         }else if(ScoreState == 6){//wait until at tolerance
-            if(SpindexWithinTolerance(1200)){
+            if(SpindexWithinTolerance(1000)){
                 ShootTimer.reset();
                 ScoreState = 7;
             }
         }else if(ScoreState == 7){
-            if(ShootTimer.milliseconds() > 50){//allow to settle
+            if(ShootTimer.milliseconds() > 100){//allow to settle
                 ScoreState = 3;//loop back to kick
             }
         }

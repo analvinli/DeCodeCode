@@ -29,8 +29,8 @@ import java.util.List;
 import com.pedropathing.follower.Follower;
 
 
-@Autonomous(name = "🔵 BLUE far 6hp")
-public class BLUE_FAR_6HP extends LinearOpMode {
+@Autonomous(name = "🔵 BLUE far 3hp")
+public class BLUE_FAR_3HP extends LinearOpMode {
     //Drivetrain
     DcMotorEx RightFront;
     DcMotorEx RightRear;
@@ -147,23 +147,16 @@ public class BLUE_FAR_6HP extends LinearOpMode {
                 Intake();
                 if(!follower.isBusy() || pathtime(1500)){
                     follower.followPath(Path4);
-                    velocity = 1570;
                     pathTimer.reset();
                     pathState++;
                 }
             }else if(pathState == 4){
-                Intake();
-                if(!follower.isBusy() && FlywheelGood() && pathtime(1600)){//at scoring position
+                if(!follower.isBusy()){
                     pathState++;
-                    ScoreState = 0;
-                }
-            }else if(pathState == 5){
-                if(ShootUnsorted()){//shoot
-                    pathState++;
-                    velocity = 0;
                     break;
                 }
             }
+
 
             follower.update();
             kickSM();

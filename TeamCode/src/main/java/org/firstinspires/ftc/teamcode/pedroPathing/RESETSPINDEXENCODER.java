@@ -17,7 +17,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "RESET_SPINDEX")
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "RESET SPINDEX")
 public class RESETSPINDEXENCODER extends LinearOpMode {
     //Drivetrain
     DcMotorEx RightFront;

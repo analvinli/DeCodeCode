@@ -29,8 +29,8 @@ import java.util.List;
 import com.pedropathing.follower.Follower;
 
 
-@Autonomous(name = "🔵 BLUE far 6hp")
-public class BLUE_FAR_6HP extends LinearOpMode {
+@Autonomous(name = "!\uD83D\uDFE5 RED close 9")
+public class RED_CLOSE_9S extends LinearOpMode {
     //Drivetrain
     DcMotorEx RightFront;
     DcMotorEx RightRear;
@@ -65,7 +65,7 @@ public class BLUE_FAR_6HP extends LinearOpMode {
 
     boolean IntakeActive = false;
     int velocity = 0;
-    PIDFController SpindexController = new PIDFController(0.00031,0,0.00001,0);
+    PIDFController SpindexController = new PIDFController(0.00035,0,0.0000065,0);
     //PIDFController SpindexController = new PIDFController(0.00024,0,0.00001,0);
 
 
@@ -79,12 +79,20 @@ public class BLUE_FAR_6HP extends LinearOpMode {
     private ElapsedTime opmodeTimer;
     private int pathState;
 
-    private final Pose startPose = new Pose(47.62, 8.88, Math.toRadians(90));
+    private final Pose startPose = new Pose(125.09512770137523, 120.48707269155206, Math.toRadians(36));
 
     public PathChain Path1;
     public PathChain Path2;
     public PathChain Path3;
     public PathChain Path4;
+    public PathChain Path5;
+    public PathChain Path6;
+    public PathChain Path7;
+    public PathChain Path8;
+    public PathChain Path9;
+    public PathChain Path10;
+    public PathChain Path11;
+    public PathChain Path12;
 
     public void runOpMode() {
         //HARDWARE MAPPING
@@ -120,75 +128,143 @@ public class BLUE_FAR_6HP extends LinearOpMode {
         int x = 0;
         while (opModeIsActive()) {
             if(pathState == 0){//start
-                velocity = 1570;//start up flywheel
-                HoodServo.setPosition(1);
-                follower.followPath(Path1);//move to read pos
+                velocity = 1150;//start up flywheel
+                HoodServo.setPosition(0);
                 SpindexController.setSetPoint(0);
+                follower.followPath(Path1);//move to read pos
                 pathState++;
                 pathTimer.reset();
-            }else if(pathState == 1){
-                if(!follower.isBusy() && FlywheelGood()){//at scoring position
+            }else if(pathState == 1){//wait until at read position
+                if(detection()){
+                    visionPortal.close();
+                    follower.followPath(Path2);//move to scoring pos
+                    pathState++;
+                    pathTimer.reset();
+                }else if(!follower.isBusy() && pathtime(3000)){
+                    motif = new int[] {1,1,2};
+                    follower.followPath(Path2);//move to scoring pos
+                    pathState++;
+                    pathTimer.reset();
+                }
+            }else if(pathState == 2){//moving to scoring pos
+                if(!follower.isBusy() && pathtime(1500)){//at scoring position
                     if(ShootUnsorted()){//shoot
                         pathState++;
                         velocity = 0;
-                        Intake();
-                        follower.followPath(Path2);//move to hp intake pos
+                        follower.followPath(Path3);//move to intake pos
                         pathTimer.reset();
                     }
                 }
-            }else if(pathState == 2){
+            }else if(pathState == 3){//moving to intake position
                 Intake();
-                if(!follower.isBusy() || pathtime(1500)){
+                if(!follower.isBusy() && pathtime(500)){//at start of intake
+                    follower.followPath(Path4,0.4,true);//move to end of intake
+                    IntakeState = 0;
                     pathState++;
-                    follower.followPath(Path3);
                     pathTimer.reset();
                 }
-            }else if(pathState == 3){
+            }else if(pathState == 4) {//moving to end of intake position
                 Intake();
-                if(!follower.isBusy() || pathtime(1500)){
-                    follower.followPath(Path4);
-                    velocity = 1570;
-                    pathTimer.reset();
-                    pathState++;
-                }
-            }else if(pathState == 4){
-                Intake();
-                if(!follower.isBusy() && FlywheelGood() && pathtime(1600)){//at scoring position
-                    pathState++;
+                if (!follower.isBusy() && pathtime(500)) {//at end of intake position
+                    pathState = 6;
+                    velocity = 1150;//rev flywheel
+                    follower.followPath(Path6);//move to shoot pos
                     ScoreState = 0;
+                    ScoreStateSorted = 0;
+                    pathTimer.reset();
                 }
-            }else if(pathState == 5){
-                if(ShootUnsorted()){//shoot
+            }else if(pathState == 6){//moving to shoot pos
+                if(!follower.isBusy() && pathtime(500)){//at shoot pos
+                    if(ShootSorted()){//when done shooting
+                        velocity = 0;
+                        follower.followPath(Path7);//move to 2nd intake pos
+                        pathState++;
+                        IntakeState = 0;
+                        pathTimer.reset();
+                    }
+                }
+            }else if(pathState == 7){//moving to 2nd intake pos
+                Intake();
+                if(!follower.isBusy() && pathtime(500)){//at 2nd intake pos
+                    follower.followPath(Path8,0.6,true);//move to end of 2nd intake
                     pathState++;
-                    velocity = 0;
-                    break;
+                    pathTimer.reset();
+                }
+            }else if(pathState == 8){//moving to 2nd intake
+                Intake();
+                if(!follower.isBusy() && pathtime(500)){//at end of 2nd intake
+                    follower.followPath(Path9);//move to shoot pos
+                    velocity = 1100;//rev flywheel
+                    pathState++;
+                    pathTimer.reset();
+                    ScoreStateSorted = 0;
+                }
+            }else if(pathState == 9){//moving to shooting pos
+                if(!follower.isBusy() && pathtime(500)){//at shoot pos
+                    if(ShootSorted()){//when done shooting
+                        velocity = 0;
+                        follower.followPath(Path10);//move to 3rd intake pos
+                        pathState++;
+                        IntakeState = 0;
+                        pathTimer.reset();
+                    }
+                }
+            }else if(pathState == 10){//moving to 3rd intake
+                Intake();
+                if(!follower.isBusy() && pathtime(500)){//at 3rd intake
+                    follower.followPath(Path11,0.6,true);//go to end of 3rd intake pos
+                    IntakeState = 0;
+                    pathState++;
+                    pathTimer.reset();
+                }
+            }else if(pathState == 11){//moving to end of 3rd intake pos
+                Intake();
+                if(!follower.isBusy() && pathtime(500)){//at end of 3rd intake
+                    follower.followPath(Path12,1,true);//move to shoot pos in a line
+                    velocity = 1150;
+                    ScoreStateSorted = 0;
+                    pathState++;
+                    pathTimer.reset();
+                }
+            }else if(pathState == 12){//moving to shoot pos
+                if(!follower.isBusy() && pathtime(800)){//at score pos
+                    if(ShootSorted()){
+                        velocity = 0;
+                        pathState++;
+                        pathTimer.reset();
+                        break;
+                    }
+                }else if(pathTimer.milliseconds()<800){
+                    Intake();
                 }
             }
+
+
 
             follower.update();
             kickSM();
             SpindexSM();
             FlywheelSM(velocity);
 
-            telemetry.addData("detect", detectTag());
-            telemetry.addData("motif0", motif[0]);
-            telemetry.addData("motif1", motif[1]);
-            telemetry.addData("motif2", motif[2]);
-            telemetry.addData("path state", pathState);
-//            telemetry.addData("x", follower.getPose().getX());
-//            telemetry.addData("y", follower.getPose().getY());
-//            telemetry.addData("heading", follower.getPose().getHeading());
-            telemetry.addData("overshoot", SpindexerMotor.getCurrentPosition()-SpindexController.getSetPoint());
-//            telemetry.addData("Intake ColorSensor: ", findColor(IntakeSensor));
-//            telemetry.addData("Left ColorSensor: ", findColor(LeftSensor));
-//            telemetry.addData("Right ColorSensor: ", findColor(RightSensor));
-//            telemetry.addData("Back ColorSensor: ", findColor(BackSensor));
-//
-//            telemetry.addData("Intake ColorSensor hue: ", JavaUtil.colorToHue(IntakeSensor.getNormalizedColors().toColor()));
-//            telemetry.addData("Left ColorSensor hue: ", JavaUtil.colorToHue(LeftSensor.getNormalizedColors().toColor()));
-//            telemetry.addData("Right ColorSensor hue: ", JavaUtil.colorToHue(RightSensor.getNormalizedColors().toColor()));
-//            telemetry.addData("Back ColorSensor hue: ", JavaUtil.colorToHue(BackSensor.getNormalizedColors().toColor()));
-            telemetry.update();
+//            telemetry.addData("detect", detectTag());
+//            telemetry.addData("motif0", motif[0]);
+//            telemetry.addData("motif1", motif[1]);
+//            telemetry.addData("motif2", motif[2]);
+//            telemetry.addData("path state", pathState);
+////            telemetry.addData("x", follower.getPose().getX());
+////            telemetry.addData("y", follower.getPose().getY());
+////            telemetry.addData("heading", follower.getPose().getHeading());
+//            telemetry.addData("overshoot", SpindexerMotor.getCurrentPosition()-SpindexController.getSetPoint());
+////            telemetry.addData("Intake ColorSensor: ", findColor(IntakeSensor));
+////            telemetry.addData("Left ColorSensor: ", findColor(LeftSensor));
+////            telemetry.addData("Right ColorSensor: ", findColor(RightSensor));
+////            telemetry.addData("Back ColorSensor: ", findColor(BackSensor));
+////
+////            telemetry.addData("Intake ColorSensor hue: ", JavaUtil.colorToHue(IntakeSensor.getNormalizedColors().toColor()));
+////            telemetry.addData("Left ColorSensor hue: ", JavaUtil.colorToHue(LeftSensor.getNormalizedColors().toColor()));
+////            telemetry.addData("Right ColorSensor hue: ", JavaUtil.colorToHue(RightSensor.getNormalizedColors().toColor()));
+////            telemetry.addData("Back ColorSensor hue: ", JavaUtil.colorToHue(BackSensor.getNormalizedColors().toColor()));
+//            telemetry.update();
         }
     }
     public boolean pathtime(int t){
@@ -201,41 +277,111 @@ public class BLUE_FAR_6HP extends LinearOpMode {
     public void buildPaths(){
         Path1 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(47.620, 8.880),
+                                new Pose(125.095, 120.487),
 
-                                new Pose(56.000, 12.000)
+                                new Pose(92.385, 112.672)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(110))
+                ).setLinearHeadingInterpolation(Math.toRadians(36), Math.toRadians(110))
 
                 .build();
 
         Path2 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(56.000, 12.000),
+                                new Pose(92.385, 112.672),
 
-                                new Pose(12.099, 16.088)
+                                new Pose(98.000, 102.000)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(110), Math.toRadians(200))
+                ).setLinearHeadingInterpolation(Math.toRadians(110), Math.toRadians(37))
 
                 .build();
 
         Path3 = follower.pathBuilder().addPath(
-                        new BezierCurve(
-                                new Pose(12.099, 16.088),
-                                new Pose(22.807, 8.892),
-                                new Pose(11.307, 9.456)
+                        new BezierLine(
+                                new Pose(98.000, 102.000),
+
+                                new Pose(99.383, 83.862)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(200), Math.toRadians(180))
+                ).setLinearHeadingInterpolation(Math.toRadians(37), Math.toRadians(0))
 
                 .build();
 
         Path4 = follower.pathBuilder().addPath(
-                        new BezierCurve(
-                                new Pose(11.307, 9.456),
-                                new Pose(29.335, 17.642),
-                                new Pose(56.000, 12.000)
+                        new BezierLine(
+                                new Pose(99.383, 83.862),
+
+                                new Pose(126.442, 84.002)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(110))
+                ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
+
+                .build();
+
+        Path6 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(126.442, 84.002),
+
+                                new Pose(98.083, 102.212)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(37))
+
+                .build();
+
+        Path7 = follower.pathBuilder().addPath(
+                        new BezierCurve(
+                                new Pose(98.083, 102.212),
+                                new Pose(80.384, 72.931),
+                                new Pose(99.019, 59.127)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(37), Math.toRadians(0))
+
+                .build();
+
+        Path8 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(99.019, 59.127),
+
+                                new Pose(132.444, 58.057)
+                        )
+                ).setTangentHeadingInterpolation()
+
+                .build();
+
+        Path9 = follower.pathBuilder().addPath(
+                        new BezierCurve(
+                                new Pose(132.444, 58.057),
+                                new Pose(95.818, 52.892),
+                                new Pose(98.170, 102.129)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(37))
+
+                .build();
+
+        Path10 = follower.pathBuilder().addPath(
+                        new BezierCurve(
+                                new Pose(98.170, 102.129),
+                                new Pose(83.656, 60.287),
+                                new Pose(89.715, 35.562)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(37), Math.toRadians(0))
+
+                .build();
+
+        Path11 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(89.715, 35.562),
+
+                                new Pose(130.910, 35.454)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
+
+                .build();
+
+        Path12 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(130.910, 35.454),
+
+                                new Pose(91.055, 112.825)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(25))
 
                 .build();
     }
@@ -255,7 +401,7 @@ public class BLUE_FAR_6HP extends LinearOpMode {
                 ScoreStateSorted = 2;
             }
         }else if(ScoreStateSorted == 2){//have settle time
-            if(ShootTimerSorted.milliseconds() > 50){
+            if(ShootTimerSorted.milliseconds() > 100){
                 ScoreStateSorted = 3;
             }
         }
@@ -269,7 +415,7 @@ public class BLUE_FAR_6HP extends LinearOpMode {
                 ScoreStateSorted = 5;
             }
         }else if(ScoreStateSorted == 5){//have settle time
-            if(ShootTimerSorted.milliseconds() > 50){
+            if(ShootTimerSorted.milliseconds() > 150){
                 ScoreStateSorted = 6;
             }
         }
@@ -296,7 +442,7 @@ public class BLUE_FAR_6HP extends LinearOpMode {
                 ScoreStateSorted = 10;
             }
         }else if(ScoreStateSorted == 10){
-            if(ShootTimerSorted.milliseconds() > 50){//allow to settle
+            if(ShootTimerSorted.milliseconds() > 150){//allow to settle
                 ScoreStateSorted = 6;//loop back to kick
             }
         }
@@ -312,12 +458,12 @@ public class BLUE_FAR_6HP extends LinearOpMode {
             numOuttaked = 0;
             ScoreState = 1;
         }else if(ScoreState == 1){//wait until at tolerance
-            if(SpindexWithinTolerance(800)){
+            if(SpindexWithinTolerance(500)){
                 ShootTimer.reset();
                 ScoreState = 2;
             }
         }else if(ScoreState == 2){//have settle time
-            if(ShootTimer.milliseconds() > 50){
+            if(ShootTimer.milliseconds() > 100){
                 ScoreState = 3;
             }
         }
@@ -339,12 +485,12 @@ public class BLUE_FAR_6HP extends LinearOpMode {
                 ScoreState = 6;
             }
         }else if(ScoreState == 6){//wait until at tolerance
-            if(SpindexWithinTolerance(1200)){
+            if(SpindexWithinTolerance(600)){
                 ShootTimer.reset();
                 ScoreState = 7;
             }
         }else if(ScoreState == 7){
-            if(ShootTimer.milliseconds() > 50){//allow to settle
+            if(ShootTimer.milliseconds() > 100){//allow to settle
                 ScoreState = 3;//loop back to kick
             }
         }
@@ -362,6 +508,14 @@ public class BLUE_FAR_6HP extends LinearOpMode {
         }else if(IntakeState == 1) {
             if (detectColor(IntakeSensor) && SpindexWithinTolerance(500)) {
                 SpindexIncrementIntake(2);
+                IntakeTimer.reset();
+                IntakeState = 2;
+            }
+            IntakeMotor.setPower(0.9);
+            IntakeActive = true;
+        }else if(IntakeState == 2){
+            if(IntakeTimer.milliseconds()>50){
+                IntakeState = 1;
             }
             IntakeMotor.setPower(0.9);
             IntakeActive = true;
@@ -440,7 +594,7 @@ public class BLUE_FAR_6HP extends LinearOpMode {
             RightFlywheelMotor.setPower(0);
             LeftFlywheelMotor.setPower(0);
         }
-        if(v - RightFlywheelMotor.getVelocity() > 50){
+        if(v - RightFlywheelMotor.getVelocity() > 100){
             RightFlywheelMotor.setPower(1);
             LeftFlywheelMotor.setPower(1);
             return 0;

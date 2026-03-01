@@ -29,7 +29,7 @@ import java.util.List;
 import com.pedropathing.follower.Follower;
 
 
-@Autonomous(name = "BLUE_CLOSE_12S")
+@Autonomous(name = "!\uD83D\uDFE6 BLUE close 12")
 public class BLUE_CLOSE_12S extends LinearOpMode {
     //Drivetrain
     DcMotorEx RightFront;
@@ -65,7 +65,8 @@ public class BLUE_CLOSE_12S extends LinearOpMode {
 
     boolean IntakeActive = false;
     int velocity = 0;
-    PIDFController SpindexController = new PIDFController(0.00030,0,0.0000065,0);
+    //PIDFController SpindexController = new PIDFController(0.00030,0,0.0000065,0);
+    PIDFController SpindexController = new PIDFController(0.00035,0,0.0000065,0);
     //PIDFController SpindexController = new PIDFController(0.00024,0,0.00001,0);
 
 
@@ -242,14 +243,14 @@ public class BLUE_CLOSE_12S extends LinearOpMode {
                     pathTimer.reset();
                 }
             }else if(pathState == 12){//moving to shoot pos
-                if(!follower.isBusy() && pathtime(500)){//at score pos
+                if(!follower.isBusy() && pathtime(800)){//at score pos
                     if(ShootSorted()){
                         velocity = 0;
                         pathState++;
                         pathTimer.reset();
                         break;
                     }
-                }else{
+                }else if(pathTimer.milliseconds()<800){
                     Intake();
                 }
             }
@@ -531,8 +532,16 @@ public class BLUE_CLOSE_12S extends LinearOpMode {
                 IntakeState = 1;
             }
         }else if(IntakeState == 1) {
-            if (detectColor(IntakeSensor) && SpindexWithinTolerance(800)) {
+            if (detectColor(IntakeSensor) && SpindexWithinTolerance(500)) {
                 SpindexIncrementIntake(2);
+                IntakeTimer.reset();
+                IntakeState = 2;
+            }
+            IntakeMotor.setPower(0.9);
+            IntakeActive = true;
+        }else if(IntakeState == 2){
+            if(IntakeTimer.milliseconds()>50){
+                IntakeState = 1;
             }
             IntakeMotor.setPower(0.9);
             IntakeActive = true;
@@ -612,7 +621,7 @@ public class BLUE_CLOSE_12S extends LinearOpMode {
             RightFlywheelMotor.setPower(0);
             LeftFlywheelMotor.setPower(0);
         }
-        if(v - RightFlywheelMotor.getVelocity() > 50){
+        if(v - RightFlywheelMotor.getVelocity() > 100){
             RightFlywheelMotor.setPower(1);
             LeftFlywheelMotor.setPower(1);
             return 0;

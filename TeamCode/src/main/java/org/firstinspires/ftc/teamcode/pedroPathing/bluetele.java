@@ -17,7 +17,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "BlueTele")
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "\uD83D\uDFE6 Blue Tele")
 public class bluetele extends LinearOpMode {
     //Drivetrain
     DcMotorEx RightFront;
@@ -179,7 +179,7 @@ public class bluetele extends LinearOpMode {
             }else if(gamepad2.left_trigger>0.4){//far scoring
                 HoodServo.setPosition(1);
                 //telemetry.addData("flywheel diff: ", 1500 - RightFlywheelMotor.getVelocity());
-                if(1570 - RightFlywheelMotor.getVelocity() > 150){
+                if(1570 - RightFlywheelMotor.getVelocity() > 300){
                     RightFlywheelMotor.setPower(1);
                 }else{
                     RightFlywheelMotor.setVelocity(1570);
@@ -219,7 +219,7 @@ public class bluetele extends LinearOpMode {
                 indexOfClosest = incrementIndex(indexOfClosest,-2,SpindexPos.length);
                 SpindexController.setSetPoint(SpindexGetAbsTarget(SpindexPos[indexOfClosest]));
                 IntakePower = IntakeConst;
-            }else if(gamepad2.aWasPressed()){//align to closest outtake [not accurate]
+            }else if(gamepad2.aWasPressed() || gamepad1.yWasPressed()){//align to closest outtake [not accurate]
                 SpindexManual = false;
                 int indexOfClosest = findIndexSpindex(FindClosestOuttake());
                 SpindexController.setSetPoint(SpindexGetAbsTarget(SpindexPos[indexOfClosest]));

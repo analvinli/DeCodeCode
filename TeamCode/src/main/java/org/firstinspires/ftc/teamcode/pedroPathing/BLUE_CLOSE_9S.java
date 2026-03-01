@@ -148,7 +148,7 @@ public class BLUE_CLOSE_9S extends LinearOpMode {
                 }
             }else if(pathState == 2){//moving to scoring pos
                 if(!follower.isBusy() && pathtime(1500)){//at scoring position
-                    if(ShootUnsorted()){//shoot
+                    if(ShootSorted()){//shoot
                         pathState++;
                         velocity = 0;
                         follower.followPath(Path3);//move to intake pos
@@ -158,7 +158,7 @@ public class BLUE_CLOSE_9S extends LinearOpMode {
             }else if(pathState == 3){//moving to intake position
                 Intake();
                 if(!follower.isBusy() && pathtime(500)){//at start of intake
-                    follower.followPath(Path4,0.4,true);//move to end of intake
+                    follower.followPath(Path4,0.3,true);//move to end of intake
                     IntakeState = 0;
                     pathState++;
                     pathTimer.reset();
@@ -169,7 +169,6 @@ public class BLUE_CLOSE_9S extends LinearOpMode {
                     pathState = 6;
                     velocity = 1150;//rev flywheel
                     follower.followPath(Path6);//move to shoot pos
-                    ScoreState = 0;
                     ScoreStateSorted = 0;
                     pathTimer.reset();
                 }
@@ -186,7 +185,7 @@ public class BLUE_CLOSE_9S extends LinearOpMode {
             }else if(pathState == 7){//moving to 2nd intake pos
                 Intake();
                 if(!follower.isBusy() && pathtime(500)){//at 2nd intake pos
-                    follower.followPath(Path8,0.6,true);//move to end of 2nd intake
+                    follower.followPath(Path8,0.3,true);//move to end of 2nd intake
                     pathState++;
                     pathTimer.reset();
                 }
@@ -212,30 +211,22 @@ public class BLUE_CLOSE_9S extends LinearOpMode {
             }else if(pathState == 10){//moving to 3rd intake
                 Intake();
                 if(!follower.isBusy() && pathtime(500)){//at 3rd intake
-                    follower.followPath(Path11,0.6,true);//go to end of 3rd intake pos
+                    follower.followPath(Path11,0.3,true);//go to end of 3rd intake pos
                     IntakeState = 0;
                     pathState++;
                     pathTimer.reset();
                 }
             }else if(pathState == 11){//moving to end of 3rd intake pos
                 Intake();
-                if(!follower.isBusy() && pathtime(500)){//at end of 3rd intake
-                    follower.followPath(Path12,1,true);//move to shoot pos in a line
-                    velocity = 1150;
-                    ScoreStateSorted = 0;
+                if(!follower.isBusy()){
                     pathState++;
+                    SpindexSpinToClosestOuttake();
                     pathTimer.reset();
                 }
-            }else if(pathState == 12){//moving to shoot pos
-                if(!follower.isBusy() && pathtime(800)){//at score pos
-                    if(ShootSorted()){
-                        velocity = 0;
-                        pathState++;
-                        pathTimer.reset();
-                        break;
-                    }
-                }else if(pathTimer.milliseconds()<800){
-                    Intake();
+            }else if(pathState == 12){
+                if(pathTimer.milliseconds()>1000){
+                    pathState++;
+                    break;
                 }
             }
 
@@ -329,7 +320,7 @@ public class BLUE_CLOSE_9S extends LinearOpMode {
                         new BezierCurve(
                                 new Pose(45.917, 102.212),
                                 new Pose(63.616, 72.931),
-                                new Pose(44.981, 59.127)
+                                new Pose(44.698, 57.146)
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(143), Math.toRadians(180))
 
@@ -337,16 +328,17 @@ public class BLUE_CLOSE_9S extends LinearOpMode {
 
         Path8 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(44.981, 59.127),
+                                new Pose(44.698, 57.146),
 
-                                new Pose(11.556, 58.057)
+                                new Pose(11.839, 56.218)
                         )
                 ).setTangentHeadingInterpolation()
+
                 .build();
 
         Path9 = follower.pathBuilder().addPath(
                         new BezierCurve(
-                                new Pose(11.556, 58.057),
+                                new Pose(11.839, 56.218),
                                 new Pose(48.182, 52.892),
                                 new Pose(45.830, 102.129)
                         )
@@ -400,7 +392,7 @@ public class BLUE_CLOSE_9S extends LinearOpMode {
                 ScoreStateSorted = 2;
             }
         }else if(ScoreStateSorted == 2){//have settle time
-            if(ShootTimerSorted.milliseconds() > 100){
+            if(ShootTimerSorted.milliseconds() > 300){
                 ScoreStateSorted = 3;
             }
         }
@@ -414,7 +406,7 @@ public class BLUE_CLOSE_9S extends LinearOpMode {
                 ScoreStateSorted = 5;
             }
         }else if(ScoreStateSorted == 5){//have settle time
-            if(ShootTimerSorted.milliseconds() > 150){
+            if(ShootTimerSorted.milliseconds() > 300){
                 ScoreStateSorted = 6;
             }
         }
@@ -441,7 +433,7 @@ public class BLUE_CLOSE_9S extends LinearOpMode {
                 ScoreStateSorted = 10;
             }
         }else if(ScoreStateSorted == 10){
-            if(ShootTimerSorted.milliseconds() > 150){//allow to settle
+            if(ShootTimerSorted.milliseconds() > 300){//allow to settle
                 ScoreStateSorted = 6;//loop back to kick
             }
         }

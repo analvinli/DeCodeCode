@@ -262,7 +262,7 @@ public class tele extends LinearOpMode {
                         IntakeState = 1;//back to ready for ball
                     }
                 }
-            }else if(gamepad1.right_bumper){//outtaking
+            }else if(gamepad1.right_bumper || gamepad1.y || gamepad2.a){//outtaking
                 IntakePower = -IntakeConst;
             }else{//turn off intake
                 ScoreState = 0;//reset state when button released

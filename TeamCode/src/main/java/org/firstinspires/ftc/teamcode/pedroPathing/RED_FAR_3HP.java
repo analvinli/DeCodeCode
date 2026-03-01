@@ -226,7 +226,7 @@ public class RED_FAR_3HP extends LinearOpMode {
                         new BezierLine(
                                 new Pose(132.693, 9.456),
 
-                                new Pose(120.534, 9.332)
+                                new Pose(119.120, 10.959)
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
 

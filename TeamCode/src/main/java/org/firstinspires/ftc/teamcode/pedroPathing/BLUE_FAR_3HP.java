@@ -223,12 +223,12 @@ public class BLUE_FAR_3HP extends LinearOpMode {
                 .build();
 
         Path4 = follower.pathBuilder().addPath(
-                        new BezierCurve(
+                        new BezierLine(
                                 new Pose(11.307, 9.456),
-                                new Pose(29.335, 17.642),
-                                new Pose(56.000, 12.000)
+
+                                new Pose(24.880, 10.959)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(110))
+                ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
 
                 .build();
     }

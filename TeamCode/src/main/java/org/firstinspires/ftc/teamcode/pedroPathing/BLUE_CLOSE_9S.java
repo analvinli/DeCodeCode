@@ -28,7 +28,7 @@ import java.util.List;
 
 import com.pedropathing.follower.Follower;
 
-
+@Disabled
 @Autonomous(name = "!\uD83D\uDFE6  BLUE close 9")
 public class BLUE_CLOSE_9S extends LinearOpMode {
     //Drivetrain

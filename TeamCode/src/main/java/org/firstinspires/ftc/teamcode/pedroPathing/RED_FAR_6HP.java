@@ -28,7 +28,7 @@ import java.util.List;
 
 import com.pedropathing.follower.Follower;
 
-
+@Disabled
 @Autonomous(name = "🔴 RED far 6hp")
 public class RED_FAR_6HP extends LinearOpMode {
     //Drivetrain

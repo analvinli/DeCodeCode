@@ -171,7 +171,6 @@ public class RED_CLOSE_12S extends LinearOpMode {
                     pathTimer.reset();
                 }
             }else if(pathState == 222){
-                Intake();
                 if(!follower.isBusy()){
                     pathState = 5;
                     pathTimer.reset();

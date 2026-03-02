@@ -444,7 +444,7 @@ public class RED_FAR_3HP extends LinearOpMode {
         }
     }
     public boolean FlywheelGood(){
-        if(Math.abs(velocity-RightFlywheelMotor.getVelocity())<100){
+        if(Math.abs(velocity-RightFlywheelMotor.getVelocity())<50){
             return true;
         }
         return false;

@@ -19,6 +19,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "\uD83D\uDFE6 Blue Tele")
 public class bluetele extends LinearOpMode {
+    //THIS opmode got us to worlds
     //Drivetrain
     DcMotorEx RightFront;
     DcMotorEx RightRear;

@@ -13,7 +13,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 
 
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "servo test")
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "tele")
 public class servotest extends LinearOpMode {
     //Drivetrain
     DcMotorEx RightFront;

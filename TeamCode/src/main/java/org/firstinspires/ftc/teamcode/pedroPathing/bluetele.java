@@ -16,10 +16,10 @@ import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import com.pedropathing.geometry.Pose;
 
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "\uD83D\uDFE6 Blue Tele")
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "🟦 Blue Tele")
 public class bluetele extends LinearOpMode {
-    //THIS opmode got us to worlds
     //Drivetrain
     DcMotorEx RightFront;
     DcMotorEx RightRear;
@@ -37,8 +37,6 @@ public class bluetele extends LinearOpMode {
     DcMotorEx RightFlywheelMotor;
     DcMotorEx LeftFlywheelMotor;
     Servo HoodServo;
-
-    GoBildaPinpointDriver pinpoint;
 
     int[] SpindexPos = {
             0,//shooting0
@@ -60,24 +58,27 @@ public class bluetele extends LinearOpMode {
     boolean flywheelactive = false;
     boolean autoaim = false;
 
-    private Follower follower;
     PIDFController SpindexController = new PIDFController(0.00030,0,0.0000065,0);
+    PIDFController AimController = new PIDFController(1.2,0,0.1,0);
+    private Follower follower;
 
 
     public void runOpMode() {
-        //follower = Constants.createFollower(hardwareMap);
+        follower = Constants.createFollower(hardwareMap);
+        follower.startTeleOpDrive();
+
         //follower.update();
         //HARDWARE MAPPING
         RightFront = hardwareMap.get(DcMotorEx.class, "fr");
         RightRear = hardwareMap.get(DcMotorEx.class, "br");
         LeftRear = hardwareMap.get(DcMotorEx.class, "bl");
         LeftFront = hardwareMap.get(DcMotorEx.class, "fl");
-        double turn;
-        double forward;
-        double strafe;
+
+        double forward = 1;
+        double strafe = 1;
         double slowMulti = 1;
-        SpindexerMotor = hardwareMap.get(DcMotorEx.class, "spindex");
-        IntakeSensor = hardwareMap.get(NormalizedColorSensor.class, "csi");
+        //SpindexerMotor = hardwareMap.get(DcMotorEx.class, "spindex");
+        //IntakeSensor = hardwareMap.get(NormalizedColorSensor.class, "csi");
         LeftSensor = hardwareMap.get(NormalizedColorSensor.class, "csl");
         BackSensor = hardwareMap.get(NormalizedColorSensor.class, "csb");
         RightSensor = hardwareMap.get(NormalizedColorSensor.class, "csr");
@@ -87,74 +88,108 @@ public class bluetele extends LinearOpMode {
         LeftFlywheelMotor = hardwareMap.get(DcMotorEx.class, "flywheell");
         HoodServo = hardwareMap.get(Servo.class,"hood");
 
-        pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+
         motorConfigs();
         //pinpoint.resetPosAndIMU();
-        pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, 96.38 ,8.88, AngleUnit.DEGREES, 0));
-        pinpoint.update();
+        follower.setStartingPose(new Pose(105.3 ,33.3, Math.PI));
+        boolean isRobotCentric = false;
+        double rotation;
+        double targetX = 12;
+        double targetY = 140;
 
 
 
-        RightFlywheelMotor.setVelocityPIDFCoefficients(300,0,0,15.5);//Flywheel Velocity PIDF
+        RightFlywheelMotor.setVelocityPIDFCoefficients(500,0,0,15.5);//Flywheel Velocity PIDF
         SpindexController.setTolerance(80, 100);
 
         double raw = 0;
         waitForStart();
         while (opModeIsActive()) {
+            follower.update();
             // --------------------
             // DRIVE
             // --------------------
-            forward = gamepad1.left_stick_y;
-            strafe = gamepad1.left_stick_x;
-            turn = -gamepad1.right_stick_x*.75;
-            //follower.update();
-
-            pinpoint.update();
-            double heading = pinpoint.getHeading(AngleUnit.RADIANS);
-            double posX = pinpoint.getPosX(DistanceUnit.INCH);
-            double posY = pinpoint.getPosY(DistanceUnit.INCH);
-//            telemetry.addData("heading", heading);
-//            telemetry.addData("posX", posX);
-//            telemetry.addData("posY", posY);
-
-            double targetX = 12.5;
-            double targetY = 135;
-
-            //double angle = Math.atan2(targetY - posY, targetX - posX);
-            double angle = Math.toRadians(24.5);
-            //telemetry.addData("angle", angle);
-            double angleError = AngleUnit.normalizeRadians(angle - heading);
+            //RELOCALIZE
             if(gamepad1.dpadUpWasPressed()){
-                pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, 96.38 ,8.88, AngleUnit.DEGREES, 0));
+                follower.setPose(new Pose(105.3 ,33.3, Math.PI));
             }
 
+            //LOCALIZATION
+            double current_heading = follower.getPose().getHeading();
+            double posX = follower.getPose().getX();
+            double posY = follower.getPose().getY();
+            double dX = targetX - posX;
+            double dY = targetY - posY;
+            double distance = Math.hypot(dX, dY);
 
-            if(!autoaim){
-                RightFront.setPower((forward+strafe-turn)*slowMulti);
-                LeftFront.setPower((forward-strafe+turn)*slowMulti);
-                LeftRear.setPower((forward+strafe+turn)*slowMulti);
-                RightRear.setPower((forward-strafe-turn)*slowMulti);
-            }else if(autoaim){
-                double turnPower = 1.5 * angleError;
-                turnPower = Math.max(-1,Math.min(1,turnPower));
-                RightFront.setPower(forward+strafe-turnPower);
-                LeftFront.setPower(forward-strafe+turnPower);
-                LeftRear.setPower(forward+strafe+turnPower);
-                RightRear.setPower(forward-strafe-turnPower);
+            double tof = getTimeOfFlight(distance);
+            //double velX = follower.getVelocity().getXComponent();
+            //double velY = follower.getVelocity().getYComponent();
+            double velX = 0;
+            double velY = 0;
+            double tempLeadX = targetX - (velX*tof);
+            double tempLeadY = targetY - (velY*tof);
+            double tempLeadDistance = Math.hypot(tempLeadX-posX, tempLeadY-posY);
+
+            double refinedTof = getTimeOfFlight(tempLeadDistance);
+            double leadX = targetX - velX*refinedTof;
+            double leadY = targetY - velY*refinedTof;
+            double leadDistance  = Math.hypot(leadX-posX, leadY-posY);
+
+            telemetry.addData("Heading: ", current_heading);
+            telemetry.addData("X: ", posX);
+            telemetry.addData("Y: ", posY);
+
+            telemetry.addData("velX: ", velX);
+            telemetry.addData("velY: ", velY);
+
+            telemetry.addData("Distance: ", distance);
+            telemetry.addData("lead distance: ", leadDistance);
+            telemetry.addData("Drive mode:" , isRobotCentric ? "ROBOT CENTRIC" : "FIELD CENTRIC");
+
+            telemetry.addData("leadY: ", leadY);
+            telemetry.addData("leadX: ", leadX);
+
+            //AUTO AIM
+            if(gamepad1.left_trigger>0.4){
+                autoaim = true;
+                double targetAngle = Math.atan2(leadY-posY, leadX-posX);
+                double error = targetAngle - current_heading;
+                while(error > Math.PI) error -= 2*Math.PI;
+                while(error < -Math.PI) error += 2*Math.PI;
+
+                AimController.setSetPoint(0);
+                rotation = AimController.calculate(-error);
+            }else{
+                autoaim = false;
+                rotation = -gamepad1.right_stick_x;
             }
 
+            //DRIVE MODE TOGGLE
+            if(gamepad1.leftStickButtonWasPressed()){//FIELD centric
+                isRobotCentric = false;
+                forward = 1;
+                strafe = 1;
+
+            }else if(gamepad1.rightStickButtonWasPressed()){//ROBOT centric
+                isRobotCentric = true;
+                forward = -1;
+                strafe = -1;
+            }
+
+            //DRIVE MODE
+            follower.setTeleOpDrive(
+                    gamepad1.left_stick_y * forward * slowMulti,
+                    gamepad1.left_stick_x * strafe * slowMulti,
+                    0.75*rotation*slowMulti,
+                    isRobotCentric
+            );
 
             //SLOW DRIVE
             if(gamepad1.left_bumper){
                 slowMulti = 0.25;
             }else{
                 slowMulti = 1;
-            }
-
-            if(gamepad1.left_trigger>0.4){
-                autoaim = true;
-            }else{
-                autoaim = false;
             }
 
             // --------------------
@@ -177,13 +212,26 @@ public class bluetele extends LinearOpMode {
                 LeftFlywheelMotor.setPower(RightFlywheelMotor.getPower());
                 IntakePower = IntakeConst;
                 flywheelactive = true;
-            }else if(gamepad2.left_trigger>0.4){//far scoring
-                HoodServo.setPosition(1);
-                //telemetry.addData("flywheel diff: ", 1500 - RightFlywheelMotor.getVelocity());
-                if(1570 - RightFlywheelMotor.getVelocity() > 300){
+            }else if(gamepad2.left_trigger>0.4){//regression scoring
+                //close reference
+                double dClose = 51;
+                double tpsClose = 1150;
+                //far reference
+                double dFar= 132;
+                double tpsFar = 1570;
+
+                double m = (tpsFar-tpsClose)/(dFar-dClose);
+                double b = tpsClose - (m*dClose)-20;
+
+                double targetTPS = m * leadDistance + b;
+
+                double targetHood = (leadDistance-71) / (145 - 71);
+                HoodServo.setPosition(targetHood);
+
+                if(targetTPS - RightFlywheelMotor.getVelocity() > 500){
                     RightFlywheelMotor.setPower(1);
                 }else{
-                    RightFlywheelMotor.setVelocity(1570);
+                    RightFlywheelMotor.setVelocity(targetTPS);
                 }
                 LeftFlywheelMotor.setPower(RightFlywheelMotor.getPower());
                 IntakePower = IntakeConst;
@@ -321,8 +369,7 @@ public class bluetele extends LinearOpMode {
 
             //telemetry.addData("x", pinpoint.getPosX(DistanceUnit.INCH));
             //telemetry.addData("y", pinpoint.getPosY(DistanceUnit.INCH));
-            telemetry.addData("heading", pinpoint.getHeading(AngleUnit.RADIANS));
-
+            telemetry.addData("hoodpos", HoodServo.getPosition());
 //            telemetry.addData("COLORSENSORS", "");
             telemetry.addData("Intake ColorSensor hue: ", JavaUtil.colorToHue(IntakeSensor.getNormalizedColors().toColor()));
 //            telemetry.addData("Left ColorSensor hue: ", JavaUtil.colorToHue(LeftSensor.getNormalizedColors().toColor()));
@@ -353,6 +400,9 @@ public class bluetele extends LinearOpMode {
             telemetry.update();
         }
         //end of teleop
+    }
+    public double getTimeOfFlight(double dist){
+        return (0.01 * dist) + 0.67;
     }
     public void motorConfigs(){
         RightFront.setDirection(DcMotorSimple.Direction.REVERSE);

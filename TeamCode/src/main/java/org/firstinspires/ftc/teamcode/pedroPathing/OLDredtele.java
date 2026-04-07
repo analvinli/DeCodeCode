@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.pedroPathing;
 
 import com.pedropathing.follower.Follower;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -16,10 +17,10 @@ import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import com.pedropathing.geometry.Pose;
 
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "red Tele")
-public class tele extends LinearOpMode {
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "🟥 OLD Red Tele", group = "old opmode")
+public class OLDredtele extends LinearOpMode {
+    //THIS opmode got us to worlds
     //Drivetrain
     DcMotorEx RightFront;
     DcMotorEx RightRear;
@@ -60,24 +61,21 @@ public class tele extends LinearOpMode {
     boolean flywheelactive = false;
     boolean autoaim = false;
 
-    PIDFController SpindexController = new PIDFController(0.00030,0,0.0000065,0);
-    PIDFController AimController = new PIDFController(1.2,0,0.1,0);
     private Follower follower;
+    PIDFController SpindexController = new PIDFController(0.00030,0,0.0000065,0);
 
 
     public void runOpMode() {
-        follower = Constants.createFollower(hardwareMap);
-        follower.startTeleOpDrive();
-
+        //follower = Constants.createFollower(hardwareMap);
         //follower.update();
         //HARDWARE MAPPING
         RightFront = hardwareMap.get(DcMotorEx.class, "fr");
         RightRear = hardwareMap.get(DcMotorEx.class, "br");
         LeftRear = hardwareMap.get(DcMotorEx.class, "bl");
         LeftFront = hardwareMap.get(DcMotorEx.class, "fl");
-
-        double forward = 1;
-        double strafe = 1;
+        double turn;
+        double forward;
+        double strafe;
         double slowMulti = 1;
         SpindexerMotor = hardwareMap.get(DcMotorEx.class, "spindex");
         IntakeSensor = hardwareMap.get(NormalizedColorSensor.class, "csi");
@@ -93,89 +91,71 @@ public class tele extends LinearOpMode {
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
         motorConfigs();
         //pinpoint.resetPosAndIMU();
-        follower.setStartingPose(new Pose(105.3 ,33.3, Math.PI));
-        boolean isRobotCentric = false;
-        double rotation;
-        double targetX = 10;
-        double targetY = 138;
+        pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, 96.38 ,8.88, AngleUnit.DEGREES, 0));
+        pinpoint.update();
 
 
 
-        RightFlywheelMotor.setVelocityPIDFCoefficients(500,0,0,15.5);//Flywheel Velocity PIDF
+        RightFlywheelMotor.setVelocityPIDFCoefficients(300,0,0,15.5);//Flywheel Velocity PIDF
         SpindexController.setTolerance(80, 100);
 
         double raw = 0;
         waitForStart();
         while (opModeIsActive()) {
-            follower.update();
             // --------------------
             // DRIVE
             // --------------------
-            //RELOCALIZE
+            forward = gamepad1.left_stick_y;
+            strafe = gamepad1.left_stick_x;
+            turn = -gamepad1.right_stick_x*.75;
+            //follower.update();
+
+            pinpoint.update();
+            double heading = pinpoint.getHeading(AngleUnit.RADIANS);
+            double posX = pinpoint.getPosX(DistanceUnit.INCH);
+            double posY = pinpoint.getPosY(DistanceUnit.INCH);
+//            telemetry.addData("heading", heading);
+//            telemetry.addData("posX", posX);
+//            telemetry.addData("posY", posY);
+
+            double targetX = 12.5;
+            double targetY = 135;
+
+            //double angle = Math.atan2(targetY - posY, targetX - posX);
+            double angle = Math.toRadians(24.5);
+            //telemetry.addData("angle", angle);
+            double angleError = AngleUnit.normalizeRadians(angle - heading);
             if(gamepad1.dpadUpWasPressed()){
-                follower.setPose(new Pose(105.3 ,33.3, Math.PI));
+                pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, 96.38 ,8.88, AngleUnit.DEGREES, 0));
             }
 
-            //LOCALIZATION
-            double current_heading = follower.getPose().getHeading();
-            double posX = follower.getPose().getX();
-            double posY = follower.getPose().getY();
-            double dX = targetX - posX;
-            double dY = targetY - posY;
-            double distance = Math.hypot(dX, dY);
-            double tof = getTimeOfFlight(distance);
-            double velX = follower.getVelocity().getXComponent();
-            double velY = follower.getVelocity().getYComponent();
-            double leadX = targetX - (velX*tof);
-            double leadY = targetY - (velY*tof);
 
-            telemetry.addData("Heading: ", current_heading);
-            telemetry.addData("X: ", posX);
-            telemetry.addData("Y: ", posY);
-            telemetry.addData("Distance: ", distance);
-            telemetry.addData("Drive mode:" , isRobotCentric ? "ROBOT CENTRIC" : "FIELD CENTRIC");
-
-
-            //AUTO AIM
-            if(gamepad1.left_trigger>0.4){
-                autoaim = true;
-                double targetAngle = Math.atan2(dY, dX);
-                double error = targetAngle - current_heading;
-                while(error > Math.PI) error -= 2*Math.PI;
-                while(error < -Math.PI) error += 2*Math.PI;
-
-                AimController.setSetPoint(0);
-                rotation = AimController.calculate(-error);
-            }else{
-                autoaim = false;
-                rotation = -gamepad1.right_stick_x;
+            if(!autoaim){
+                RightFront.setPower((forward+strafe-turn)*slowMulti);
+                LeftFront.setPower((forward-strafe+turn)*slowMulti);
+                LeftRear.setPower((forward+strafe+turn)*slowMulti);
+                RightRear.setPower((forward-strafe-turn)*slowMulti);
+            }else if(autoaim){
+                double turnPower = 1.5 * angleError;
+                turnPower = Math.max(-1,Math.min(1,turnPower));
+                RightFront.setPower(forward+strafe-turnPower);
+                LeftFront.setPower(forward-strafe+turnPower);
+                LeftRear.setPower(forward+strafe+turnPower);
+                RightRear.setPower(forward-strafe-turnPower);
             }
 
-            //DRIVE MODE TOGGLE
-            if(gamepad1.leftStickButtonWasPressed()){//FIELD centric
-                isRobotCentric = false;
-                forward = 1;
-                strafe = 1;
-
-            }else if(gamepad1.rightStickButtonWasPressed()){//ROBOT centric
-                isRobotCentric = true;
-                forward = -1;
-                strafe = -1;
-            }
-
-            //DRIVE MODE
-            follower.setTeleOpDrive(
-                    gamepad1.left_stick_y * forward * slowMulti,
-                    gamepad1.left_stick_x * strafe * slowMulti,
-                    0.75*rotation*slowMulti,
-                    isRobotCentric
-            );
 
             //SLOW DRIVE
             if(gamepad1.left_bumper){
                 slowMulti = 0.25;
             }else{
                 slowMulti = 1;
+            }
+
+            if(gamepad1.left_trigger>0.4){
+                autoaim = true;
+            }else{
+                autoaim = false;
             }
 
             // --------------------
@@ -198,26 +178,13 @@ public class tele extends LinearOpMode {
                 LeftFlywheelMotor.setPower(RightFlywheelMotor.getPower());
                 IntakePower = IntakeConst;
                 flywheelactive = true;
-            }else if(gamepad2.left_trigger>0.4){//regression scoring
-                //close reference
-                double dClose = 51;
-                double tpsClose = 1150;
-                //far reference
-                double dFar= 132;
-                double tpsFar = 1570;
-
-                double m = (tpsFar-tpsClose)/(dFar-dClose);
-                double b = tpsClose - (m*dClose)-20;
-
-                double targetTPS = m * distance + b;
-
-                double targetHood = (distance-71) / (145 - 71);
-                HoodServo.setPosition(targetHood);
-
-                if(targetTPS - RightFlywheelMotor.getVelocity() > 500){
+            }else if(gamepad2.left_trigger>0.4){//far scoring
+                HoodServo.setPosition(1);
+                //telemetry.addData("flywheel diff: ", 1500 - RightFlywheelMotor.getVelocity());
+                if(1570 - RightFlywheelMotor.getVelocity() > 300){
                     RightFlywheelMotor.setPower(1);
                 }else{
-                    RightFlywheelMotor.setVelocity(targetTPS);
+                    RightFlywheelMotor.setVelocity(1570);
                 }
                 LeftFlywheelMotor.setPower(RightFlywheelMotor.getPower());
                 IntakePower = IntakeConst;
@@ -356,7 +323,7 @@ public class tele extends LinearOpMode {
             //telemetry.addData("x", pinpoint.getPosX(DistanceUnit.INCH));
             //telemetry.addData("y", pinpoint.getPosY(DistanceUnit.INCH));
             telemetry.addData("heading", pinpoint.getHeading(AngleUnit.RADIANS));
-            telemetry.addData("hoodpos", HoodServo.getPosition());
+
 //            telemetry.addData("COLORSENSORS", "");
             telemetry.addData("Intake ColorSensor hue: ", JavaUtil.colorToHue(IntakeSensor.getNormalizedColors().toColor()));
 //            telemetry.addData("Left ColorSensor hue: ", JavaUtil.colorToHue(LeftSensor.getNormalizedColors().toColor()));
@@ -387,9 +354,6 @@ public class tele extends LinearOpMode {
             telemetry.update();
         }
         //end of teleop
-    }
-    public double getTimeOfFlight(double dist){
-        return 1;
     }
     public void motorConfigs(){
         RightFront.setDirection(DcMotorSimple.Direction.REVERSE);

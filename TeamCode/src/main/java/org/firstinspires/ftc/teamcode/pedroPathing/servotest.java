@@ -13,7 +13,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 
 
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "tele")
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "blue tele")
 public class servotest extends LinearOpMode {
     //Drivetrain
     DcMotorEx RightFront;
@@ -41,7 +41,7 @@ public class servotest extends LinearOpMode {
 
     int shootindex = 2;
     int intakeindex = 0;
-    double intakeConst = 0.5;
+    double intakeConst = 0.8;
     double intakePower = 0;
     int a = 0;
     //--------------------------------------------
@@ -99,36 +99,29 @@ public class servotest extends LinearOpMode {
             }
 
             if(gamepad2.right_trigger > 0.2){//1000 for close
-                Shooter(1600);
+                shooter_tps = 1600;
                 intakePower = intakeConst;
-//                SlaveShooterMotor.setPower(1);
-//                MasterShooterMotor.setPower(1);
             }else if(gamepad2.right_bumper){
-                Shooter(-500);
+                shooter_tps = -500;
                 intakePower = intakeConst;
             }else{
-                Shooter(0);
+                shooter_tps = 0;
             }
 
             if(gamepad2.right_trigger>0.4 || gamepad1.left_trigger>0.4){
                 boolean aimed = aimTurretWithoutVel();
                 telemetry.addData("aimed", aimed);
+            }else{
+                holdTurretPos();
             }
             telemetry.addData("aim angle", getAimAngle());
-
-
-            if(gamepad1.dpadLeftWasPressed()){
-                kVF+=0.01;
-            }if(gamepad1.dpadRightWasPressed()){
-                kVF-=0.01;
-            }
-
-            telemetry.addData("kVF", String.format("%.6f", kVF));
 
 
             IntakeMotor.setPower(intakePower);
             TeleDrive();
             Kick_SM();
+            Shooter(shooter_tps);
+
             telemetry.addData("beam", BeamBroken());
             telemetry.addData("vel: ", MasterShooterMotor.getVelocity());
             telemetry.addData("turretpos: ", getTurretTicks());
@@ -191,7 +184,6 @@ public class servotest extends LinearOpMode {
 
         LeftFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         LeftFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-
     }
 
     //DRIVE
@@ -242,11 +234,68 @@ public class servotest extends LinearOpMode {
         telemetry.addData("-----------------------","");
     }
 
+    //VELOCITY COMPENSATION
+    double BALL_SPEED = 1; //inches/sec
+    public double[] getLeadCoords() {
+        double[] turretCoords = getTurretCoords();
+        double turretX = turretCoords[0];
+        double turretY = turretCoords[1];
+
+        double robotVelX = follower.getVelocity().getXComponent();
+        double robotVelY = follower.getVelocity().getYComponent();
+
+        //first estimate
+        double distance = Math.hypot(targetX - turretX, targetY - turretY);
+        double flightTime = distance / BALL_SPEED;
+
+        //refine twice
+        flightTime = refineToF(flightTime, robotVelX, robotVelY, turretX, turretY);
+        flightTime = refineToF(flightTime, robotVelX, robotVelY, turretX, turretY);
+
+        double leadX = targetX - (robotVelX * flightTime);
+        double leadY = targetY - (robotVelY * flightTime);
+
+        return new double[]{leadX, leadY};
+    }
+    public double refineToF(double flightTime, double robotVelX, double robotVelY, double turretX, double turretY){
+
+        double leadX = targetX - (robotVelX * flightTime);
+        double leadY = targetY - (robotVelY * flightTime);
+        double refinedDistance = Math.hypot(leadX - turretX, leadY - turretY);
+
+        return refinedDistance / BALL_SPEED;
+    }
+    public double getAimAngleCompensate() {
+        double[] turretCoords = getTurretCoords();
+        double[] lead = getLeadCoords();
+
+        double dX = lead[0] - turretCoords[0];
+        double dY = lead[1] - turretCoords[1];
+
+        double angle = Math.toDegrees(Math.atan2(dY, dX));
+        double robotHeading = Math.toDegrees(follower.getPose().getHeading());
+        double relativeAngle = angle - robotHeading;
+
+        relativeAngle = ((relativeAngle + 180) % 360 + 360) % 360 - 180;
+        return relativeAngle;
+    }
+    public double getCompensatedShooterSpeed() {
+        double[] turretCoords = getTurretCoords();
+        double[] lead = getLeadCoords();
+
+        double dX = lead[0] - turretCoords[0];
+        double dY = lead[1] - turretCoords[1];
+        double leadDistance = Math.hypot(dX, dY);
+
+        return getTargetTPS(leadDistance);
+    }
+
+
     //TURRET
-    int TURRET_MIN = -6000;
-    int TURRET_MAX = 6000;
-    int TURRET_RIGHT = 4300;
-    int TURRET_LEFT = -4300;
+    int TURRET_MIN = -6500;
+    int TURRET_MAX = 6500;
+    int TURRET_RIGHT = -4300;
+    int TURRET_LEFT = 4300;
     double TURRET_OFFSET_X = -80 / 25.4;
     double TURRET_OFFSET_Y = 0;
     double TICKS_PER_DEGREE = 4300.0/90.0;//47.78
@@ -257,7 +306,6 @@ public class servotest extends LinearOpMode {
     double kD = 0.000013;
     double kVF = 0.148;
     PIDFController TurretPIDF = new PIDFController(kP,0,kD,0);//need to tune
-
 
     public int getTurretTicks(){
         return LeftFront.getCurrentPosition();
@@ -330,8 +378,12 @@ public class servotest extends LinearOpMode {
     public boolean aimTurretWithoutVel(){
         return MoveTurretToDegrees(getAimAngle());
     }
+    public void holdTurretPos(){
+        TurretMotor.setPower(0);
+    }
 
     //SHOOTER
+    int shooter_tps = 0;
     public boolean Shooter(int tps){
         if (tps == 0) {
             MasterShooterMotor.setPower(0);
@@ -356,6 +408,28 @@ public class servotest extends LinearOpMode {
             SlaveShooterMotor.setPower(MasterShooterMotor.getPower());
             return false;
         }
+    }
+    public double getTargetTPS(double distance) {
+        double distClose = 51;
+        double tpsClose = 1150;
+        double distFar = 132;
+        double tpsFar = 1570;
+
+        double m = (tpsFar - tpsClose) / (distFar - distClose);
+        double b = tpsClose - (m * distClose);
+
+        return m * distance + b;
+    }
+    public double getTargetHood(double distance) {
+        double distClose = 71;
+        double posClose = 0;
+        double distFar = 145;
+        double posFar = 1;
+
+        double m = (posFar - posClose) / (distFar - distClose);
+        double b = posClose - (m * distClose);
+
+        return m * distance + b;
     }
 
     //SHOOTING MACRO
@@ -460,7 +534,7 @@ public class servotest extends LinearOpMode {
     ElapsedTime KickerTimer = new ElapsedTime();
     public void Kick_SM(){
         if(kickstate == 0){
-            KickerServo.setPosition(0.3);//low position
+            KickerServo.setPosition(0.32);//low position
         }else if(kickstate == 1){
             KickerServo.setPosition(0.5);//high position
             KickerTimer.reset();

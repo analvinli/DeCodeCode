@@ -43,7 +43,7 @@ public class servotest extends LinearOpMode {
     int intakeindex = 0;
     double intakeConst = 0.8;
     double intakePower = 0;
-    int a = 0;
+    ElapsedTime cycleTimer = new ElapsedTime();
     //--------------------------------------------
 //    double targetX = 12;
 //    double targetY = 140;
@@ -82,10 +82,12 @@ public class servotest extends LinearOpMode {
             if(gamepad1.bWasPressed()) intakeindex = SpindexToIntakePos(intakeindex+1);
 
 
-            if(gamepad2.dpad_up) ShootUnsorted();//shoot macro
+            //SHOOT MACRO
+            if(gamepad2.dpad_up) ShootUnsorted();
             else ShootState = 0;
 
-            if(gamepad1.right_trigger>0.3){//intake macro
+            //INTAKE MACRO
+            if(gamepad1.right_trigger>0.3){
                 Intake();
                 intakePower = intakeConst;
             }else if(IntakeState>=4){
@@ -98,6 +100,7 @@ public class servotest extends LinearOpMode {
                 intakePower = 0;
             }
 
+            //SHOOTER
             if(gamepad2.right_trigger > 0.2){//1000 for close
                 shooter_tps = 1600;
                 intakePower = intakeConst;
@@ -108,26 +111,30 @@ public class servotest extends LinearOpMode {
                 shooter_tps = 0;
             }
 
+            //AIMING
             if(gamepad2.right_trigger>0.4 || gamepad1.left_trigger>0.4){
                 boolean aimed = aimTurretWithoutVel();
-                telemetry.addData("aimed", aimed);
+                if(aimed){
+                    telemetry.addData("--------------------------------------------","");
+                    telemetry.addData("AIMED AIMED AIMED AIMED AIMED AIMED ", "");
+                    telemetry.addData("--------------------------------------------","");
+                }
             }else{
                 holdTurretPos();
             }
-            telemetry.addData("aim angle", getAimAngle());
-
 
             IntakeMotor.setPower(intakePower);
             TeleDrive();
             Kick_SM();
             Shooter(shooter_tps);
 
-            telemetry.addData("beam", BeamBroken());
-            telemetry.addData("vel: ", MasterShooterMotor.getVelocity());
-            telemetry.addData("turretpos: ", getTurretTicks());
-            telemetry.addData("shootindex", shootindex);
-            telemetry.addData("turret degrees: ", ticksToDegrees(getTurretTicks()));
+            telemetry.addData("Beam State: ", BeamBroken());
+            telemetry.addData("Shooter Velocity: ", MasterShooterMotor.getVelocity());
+            telemetry.addData("Turret Ticks: ", getTurretTicks());
+            telemetry.addData("Shoot Index: ", shootindex);
+            telemetry.addData("Loop Time: ", cycleTimer.milliseconds() + "ms");
             telemetry.update();
+            cycleTimer.reset();
         }
     }
 
@@ -289,7 +296,6 @@ public class servotest extends LinearOpMode {
 
         return getTargetTPS(leadDistance);
     }
-
 
     //TURRET
     int TURRET_MIN = -6500;
@@ -522,7 +528,7 @@ public class servotest extends LinearOpMode {
         return index;
     }
 
-    //BEAM BREAK, to be completed
+    //BEAM BREAK
     public boolean BeamBroken(){
         return !BeamBreak.getState();
     }

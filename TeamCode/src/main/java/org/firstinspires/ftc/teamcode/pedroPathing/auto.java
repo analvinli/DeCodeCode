@@ -3,7 +3,10 @@ package org.firstinspires.ftc.teamcode.pedroPathing;
 
 import com.arcrobotics.ftclib.controller.PIDFController;
 import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.BezierCurve;
+import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
+import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -20,8 +23,8 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.firstinspires.ftc.vision.VisionPortal;
 import java.util.List;
 
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "blue tele")
-public class servotest extends LinearOpMode {
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "red auto")
+public class auto extends LinearOpMode {
     //Drivetrain
     DcMotorEx RightFront;
     DcMotorEx RightRear;
@@ -48,21 +51,35 @@ public class servotest extends LinearOpMode {
     AprilTagProcessor aprilTag;
     VisionPortal visionPortal;
 
+    public PathChain Path1;
+    public PathChain Path2;
+    public PathChain Path3;
+    public PathChain Path4;
+    public PathChain Path5;
+    public PathChain Path6;
+    public PathChain Path7;
+    public PathChain Path8;
+    public PathChain Path9;
+    public PathChain Path10;
+    public PathChain Path11;
+    public PathChain Path12;
+
     int shootindex = 2;
     int intakeindex = 0;
     double intakeConst = 0.8;
     double intakePower = 0;
     ElapsedTime cycleTimer = new ElapsedTime();
-    int motif_index = 0;
     //--------------------------------------------
-    double targetX = 16;
-    double targetY = 135;
+    double targetX = 131.4223968565815;
+    double targetY = 133.8821218074656;
 
-    double startX = 105.3;
-    double startY = 33.3;
-    double startHeading = Math.PI;
+    double startX = 125.09512770137523;
+    double startY = 120.48707269155206;
+    double startHeading = Math.toRadians(36);
     //--------------------------------------------
 
+    int pathState = 0;
+    ElapsedTime pathTimer = new ElapsedTime();
     public void runOpMode() {
         initialize();
         //shoot1, 0.5
@@ -77,103 +94,144 @@ public class servotest extends LinearOpMode {
         //intake 0.19
 
         HoodServo.setPosition(0.3);
+        SpindexToShootPos(2);
+        buildpaths();
         waitForStart();
         while (opModeIsActive()) {
+            PoseStorage.save(follower.getPose());
+            intakePower = 0.8;
             follower.update();
-            if(gamepad2.xWasPressed()) shootindex = SpindexToShootPos(shootindex-1);
-            if(gamepad2.bWasPressed()) shootindex = SpindexToShootPos(shootindex+1);
-            if(gamepad2.aWasPressed()) shootindex = SpindexToShootPos(2);
-            if(gamepad2.yWasPressed()) Kick();
 
-            if(gamepad1.xWasPressed()) intakeindex = SpindexToIntakePos(intakeindex-1);
-            if(gamepad1.bWasPressed()) intakeindex = SpindexToIntakePos(intakeindex+1);
-
-
-            //SHOOT MACRO
-            if(gamepad2.dpad_up) ShootUnsorted();
-            else ShootState = 0;
-
-            if(gamepad2.dpad_down) ShootSorted();
-            else SortShootState = 0;
-
-            if(gamepad2.dpadRightWasPressed()) SpindexSpinToColor(1);//purple
-            if(gamepad2.dpadLeftWasPressed()) SpindexSpinToColor(2);//green
-
-            //INTAKE MACRO
-            if(gamepad1.right_trigger>0.3){
-                Intake();
-                intakePower = intakeConst;
-            }else if(IntakeState>=4){
-                EndIntake();
-                intakePower = intakeConst;
-            }else if(gamepad1.right_bumper){
-                intakePower = -intakeConst;
-            }else{
-                IntakeState = 0;
-                intakePower = 0;
-            }
-
-            //SHOOTER
-            if(gamepad2.right_trigger > 0.2){
-                shooter_tps = (int) getTargetTPS(getTurretDistance());
-                HoodServo.setPosition(getTargetHood(getTurretDistance()));
-                intakePower = intakeConst;
-            }else if(gamepad2.left_trigger > 0.4){
-                shooter_tps = 1000;
-                HoodServo.setPosition(0.3);
-                intakePower = intakeConst;
-            }else if(gamepad2.right_bumper){
-                shooter_tps = -500;
-                intakePower = intakeConst;
-            }else{
-                shooter_tps = 0;
-            }
-
-            //AIMING
-            if(gamepad2.right_trigger>0.4){
-                boolean aimed = aimTurretWithoutVel();
-                if(aimed){
-                    telemetry.addData("--------------------------------------------","");
-                    telemetry.addData("AIMED AIMED AIMED AIMED AIMED AIMED ", "");
-                    telemetry.addData("--------------------------------------------","");
+            if(pathState == 0){//start
+                follower.followPath(Path1);//move to read pos
+                pathState++;
+                pathTimer.reset();
+            }else if(pathState == 1){//wait until at read position
+                if(detection()){
+                    //visionPortal.close();
+                    follower.followPath(Path2);//move to scoring pos
+                    pathState++;
+                    pathTimer.reset();
+                }else if(!follower.isBusy() && pathTimer.seconds()>2){
+                    //visionPortal.close();
+                    motif = new int[] {1,1,2};
+                    follower.followPath(Path2);//move to scoring pos
+                    pathState++;
+                    pathTimer.reset();
                 }
-            }else if(gamepad1.left_trigger>0.4){
-                MoveTurretToTick(0);
-            }else{
-                holdTurretPos();
+            }else if(pathState == 2){//moving to scoring pos
+                if(!follower.isBusy() && pathTimer.milliseconds()>1500){//at scoring position
+                    if(ShootUnsorted()){//shoot
+                        pathState++;
+                        follower.followPath(Path3);//move to intake pos
+                        pathTimer.reset();
+                        IntakeState = 0;
+                    }
+                }
+            }else if(pathState == 3){//moving to intake position
+                Intake();
+                if(!follower.isBusy() && pathTimer.milliseconds()>500){//at start of intake
+                    follower.followPath(Path4,1,true);//move to end of intake
+                    IntakeState = 0;
+                    pathState++;
+                    pathTimer.reset();
+                }
+            }else if(pathState == 4){//moving to end of intake position
+                Intake();
+                if(!follower.isBusy() && pathTimer.milliseconds()>500){//at end of intake position
+                    follower.followPath(Path5);//move to gate pos
+                    pathState = 222;
+                    pathTimer.reset();
+                }
+            }else if(pathState == 222){
+                Intake();
+                if(!follower.isBusy()){
+                    pathState = 5;
+                    pathTimer.reset();
+                }else if(pathTimer.milliseconds()>500){
+                    pathState = 5;
+                    pathTimer.reset();
+                }
             }
-
-            if(gamepad1.dpadRightWasPressed()){
-                SpindexSpinToColor(1);
-            }else if(gamepad1.dpadLeftWasPressed()){
-                SpindexSpinToColor(2);
+            else if(pathState == 5){//moving to gate pos
+                EndIntake();
+                if(!follower.isBusy() && pathTimer.milliseconds()>1500){//at gate position
+                    pathState++;
+                    follower.followPath(Path6);//move to shoot pos
+                    ShootState = 0;
+                    pathTimer.reset();
+                }
+            }else if(pathState == 6){//moving to shoot pos
+                if(!follower.isBusy() && pathTimer.milliseconds()>500){//at shoot pos
+                    if(ShootSorted()){//when done shooting
+                        follower.followPath(Path7);//move to 2nd intake pos
+                        pathState++;
+                        IntakeState = 0;
+                        pathTimer.reset();
+                    }
+                }
+            }else if(pathState == 7){//moving to 2nd intake pos
+                Intake();
+                if(!follower.isBusy() && pathTimer.milliseconds()>500){//at 2nd intake pos
+                    follower.followPath(Path8,1,true);//move to end of 2nd intake
+                    pathState++;
+                    pathTimer.reset();
+                }
+            }else if(pathState == 8){//moving to 2nd intake
+                Intake();
+                if(!follower.isBusy() && pathTimer.milliseconds()>500){//at end of 2nd intake
+                    follower.followPath(Path9);//move to shoot pos
+                    pathState++;
+                    pathTimer.reset();
+                    SortShootState = 0;
+                }
+            }else if(pathState == 9){//moving to shooting pos
+                EndIntake();
+                if(!follower.isBusy() && pathTimer.milliseconds()>500){//at shoot pos
+                    if(ShootSorted()){//when done shooting
+                        follower.followPath(Path10);//move to 3rd intake pos
+                        pathState++;
+                        IntakeState = 0;
+                        pathTimer.reset();
+                    }
+                }
+            }else if(pathState == 10){//moving to 3rd intake
+                Intake();
+                if(!follower.isBusy() && pathTimer.milliseconds()>500){//at 3rd intake
+                    follower.followPath(Path11,1,true);//go to end of 3rd intake pos
+                    IntakeState = 0;
+                    pathState++;
+                    pathTimer.reset();
+                }
+            }else if(pathState == 11){//moving to end of 3rd intake pos
+                Intake();
+                if(!follower.isBusy() && pathTimer.milliseconds()>500){//at end of 3rd intake
+                    follower.followPath(Path12,1,true);//move to shoot pos in a line
+                    SortShootState = 0;
+                    pathState++;
+                    pathTimer.reset();
+                }
+            }else if(pathState == 12){//moving to shoot pos
+                EndIntake();
+                if(!follower.isBusy() && pathTimer.milliseconds()>500){//at score pos
+                    if(ShootSorted()){
+                        pathState++;
+                        pathTimer.reset();
+                        PoseStorage.save(follower.getPose());
+                        break;
+                    }
+                }else if(pathTimer.milliseconds()<800){
+                    Intake();
+                }
             }
 
             IntakeMotor.setPower(intakePower);
-            TeleDrive();
             Kick_SM();
+            shooter_tps = (int) getTargetTPS(getTurretDistance());
             Shooter(shooter_tps);
+            aimTurretWithoutVel();
 
-            int[][] motifs = {
-                    {1,1,2},
-                    {1,2,1},
-                    {2,1,1},
-            };
-            if(gamepad2.leftBumperWasPressed()){
-                motif_index = (motif_index+1)%3;
-                motif[0] = motifs[motif_index][0];
-                motif[1] = motifs[motif_index][1];
-                motif[2] = motifs[motif_index][2];
-            }
-
-//            telemetry.addData("backCS", readColor(BackSensor));
-//            telemetry.addData("leftCS", readColor(LeftSensor));
-//            telemetry.addData("rightCS", readColor(RightSensor));
-//
-//            telemetry.addData("backCS", getColor(BackSensor));
-//            telemetry.addData("leftCS", getColor(LeftSensor));
-//            telemetry.addData("rightCS", getColor(RightSensor));
-
+            telemetry.addData("motif: ", motif[0] + motif[1] + motif[2]);
             telemetry.addData("target angle: ", getAimAngle());
             telemetry.addData("Beam State: ", BeamBroken());
             telemetry.addData("Shooter Velocity: ", MasterShooterMotor.getVelocity());
@@ -184,11 +242,132 @@ public class servotest extends LinearOpMode {
             cycleTimer.reset();
         }
     }
+    public void buildpaths(){
+        Path1 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(125.095, 120.487),
+
+                                new Pose(92.385, 112.672)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(36), Math.toRadians(110))
+
+                .build();
+
+        Path2 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(92.385, 112.672),
+
+                                new Pose(87.674, 96.625)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(110), Math.toRadians(-50))
+
+                .build();
+
+        Path3 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(87.674, 96.625),
+
+                                new Pose(99.383, 83.862)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(-50), Math.toRadians(0))
+
+                .build();
+
+        Path4 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(99.383, 83.862),
+
+                                new Pose(126.442, 84.002)
+                        )
+                ).setTangentHeadingInterpolation()
+
+                .build();
+
+        Path5 = follower.pathBuilder().addPath(
+                        new BezierCurve(
+                                new Pose(126.442, 84.002),
+                                new Pose(109.992, 79.744),
+                                new Pose(126.784, 72.758)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(90))
+
+                .build();
+
+        Path6 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(126.784, 72.758),
+
+                                new Pose(88.039, 95.564)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(-50))
+
+                .build();
+
+        Path7 = follower.pathBuilder().addPath(
+                        new BezierCurve(
+                                new Pose(88.039, 95.564),
+                                new Pose(87.598, 74.204),
+                                new Pose(99.019, 59.127)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(-50), Math.toRadians(0))
+
+                .build();
+
+        Path8 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(99.019, 59.127),
+
+                                new Pose(132.444, 58.057)
+                        )
+                ).setTangentHeadingInterpolation()
+
+                .build();
+
+        Path9 = follower.pathBuilder().addPath(
+                        new BezierCurve(
+                                new Pose(132.444, 58.057),
+                                new Pose(101.476, 64.209),
+                                new Pose(87.561, 96.329)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-50))
+
+                .build();
+
+        Path10 = follower.pathBuilder().addPath(
+                        new BezierCurve(
+                                new Pose(87.561, 96.329),
+                                new Pose(83.656, 60.287),
+                                new Pose(100.999, 35.362)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(-50), Math.toRadians(0))
+
+                .build();
+
+        Path11 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(100.999, 35.362),
+
+                                new Pose(129.354, 35.312)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
+
+                .build();
+
+        Path12 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(129.354, 35.312),
+
+                                new Pose(91.055, 112.825)
+                        )
+                ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-50))
+
+                .build();
+    }
 
     //INIT
     public void initialize(){
         follower = Constants.createFollower(hardwareMap);
-        follower.startTeleOpDrive();
+        //follower.startTeleOpDrive();
         follower.setStartingPose(new Pose(startX ,startY, startHeading));
         //Drivetrain
         RightFront = hardwareMap.get(DcMotorEx.class, "fr");
@@ -239,8 +418,8 @@ public class servotest extends LinearOpMode {
 //        TurretMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
 //        TurretMotor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
 
-//        LeftFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-//        LeftFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        LeftFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        LeftFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     //DRIVE
@@ -507,7 +686,7 @@ public class servotest extends LinearOpMode {
         double m = (tpsFar - tpsClose) / (distFar - distClose);
         double b = tpsClose - (m * distClose);
 
-        return Math.min(m * distance + b - 200, 1900);
+        return Math.min(m * distance + b, 1500);
     }
     public double getTargetHood(double distance) {
         double distClose = 61.9;
@@ -526,7 +705,7 @@ public class servotest extends LinearOpMode {
     ElapsedTime ShootTimer = new ElapsedTime();
     int SPINDEX_SETTLE_TIME = 150;
     int num_shot = 0;
-    public void ShootUnsorted(){
+    public boolean ShootUnsorted(){
         if(ShootState == 0){
             shootindex = SpindexToShootPos(2);//go to first shoot position
             ShootTimer.reset();
@@ -551,9 +730,11 @@ public class servotest extends LinearOpMode {
                 ShootState = 2;
                 if(num_shot >= 3){
                     ShootState = 99;
+                    return true;
                 }
             }
         }
+        return false;
     }
 
     int SortShootState = 0;
@@ -561,7 +742,7 @@ public class servotest extends LinearOpMode {
     int sort_num_shot = 0;
     int VARIABLE_SPINDEX_SETTLE_TIME = 140;
     int[] motif = {1,2,1};
-    public void ShootSorted(){
+    public boolean ShootSorted(){
         if(SortShootState == 0){
             shootindex = SpindexToShootPos(2);//go to first shoot position
             SortShootTimer.reset();
@@ -569,7 +750,7 @@ public class servotest extends LinearOpMode {
             SortShootState++;
         }else if(SortShootState == 1){//init settle time
             if(SortShootTimer.milliseconds() >= 250){
-                VARIABLE_SPINDEX_SETTLE_TIME = SpindexSpinToColor(motif[sort_num_shot]) * 140;
+                VARIABLE_SPINDEX_SETTLE_TIME = SpindexSpinToColor(motif[sort_num_shot]) * 180;
                 SortShootTimer.reset();
                 SortShootState++;
             }
@@ -583,13 +764,15 @@ public class servotest extends LinearOpMode {
                 sort_num_shot++;
                 if(sort_num_shot>=3){
                     SortShootState = 99;
+                    return true;
                 }else{
-                    VARIABLE_SPINDEX_SETTLE_TIME = SpindexSpinToColor(motif[sort_num_shot]) * 140;
+                    VARIABLE_SPINDEX_SETTLE_TIME = SpindexSpinToColor(motif[sort_num_shot]) * 180;
                     SortShootTimer.reset();
                     SortShootState = 2;
                 }
             }
         }
+        return false;
     }
 
     //INTAKE MACRO
@@ -597,6 +780,7 @@ public class servotest extends LinearOpMode {
     ElapsedTime IntakeTimer = new ElapsedTime();
     int SPINDEX_INTAKE_SETTLE_TIME = 100;
     public void Intake(){
+        intakePower = 0.8;
         if(IntakeState == 0){
             intakeindex = SpindexToIntakePos(0);//go to first Intake position
             IntakeTimer.reset();
@@ -618,6 +802,7 @@ public class servotest extends LinearOpMode {
         }
     }
     public boolean EndIntake(){
+        intakePower = 0.8;
         if(IntakeState == 4){
             intakeindex = SpindexToIntakePos(2);//go to last intake position
             IntakeTimer.reset();
@@ -775,11 +960,12 @@ public class servotest extends LinearOpMode {
 
     //CAMERA
     public boolean detection(){
-        int tag = detectTag();
-        if(solveMotif(tag).length == 3){
-            motif = solveMotif(tag);
-            return true;
-        }
+//        int tag = detectTag();
+//        if(solveMotif(tag).length == 3){
+//            motif = solveMotif(tag);
+//            return true;
+//        }
+//        return false;
         return false;
     }
     public int detectTag() {

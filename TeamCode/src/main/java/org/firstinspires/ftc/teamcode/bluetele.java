@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
-
 import com.arcrobotics.ftclib.controller.PIDFController;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
@@ -21,7 +20,7 @@ import org.firstinspires.ftc.vision.VisionPortal;
 import java.util.List;
 
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "blue tele")
-public class servotest extends LinearOpMode {
+public class bluetele extends LinearOpMode {
     //Drivetrain
     DcMotorEx RightFront;
     DcMotorEx RightRear;
@@ -77,6 +76,10 @@ public class servotest extends LinearOpMode {
         //intake 0.19
 
         HoodServo.setPosition(0.3);
+
+        Pose savedPose = PoseStorage.get();
+        follower.setStartingPose(savedPose);
+
         waitForStart();
         while (opModeIsActive()) {
             follower.update();
@@ -189,7 +192,7 @@ public class servotest extends LinearOpMode {
     public void initialize(){
         follower = Constants.createFollower(hardwareMap);
         follower.startTeleOpDrive();
-        follower.setStartingPose(new Pose(startX ,startY, startHeading));
+        //follower.setStartingPose(new Pose(startX ,startY, startHeading));
         //Drivetrain
         RightFront = hardwareMap.get(DcMotorEx.class, "fr");
         RightRear = hardwareMap.get(DcMotorEx.class, "br");

@@ -20,8 +20,8 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.firstinspires.ftc.vision.VisionPortal;
 import java.util.List;
 
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "blue tele")
-public class servotest extends LinearOpMode {
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "demo blue")
+public class demo extends LinearOpMode {
     //Drivetrain
     DcMotorEx RightFront;
     DcMotorEx RightRear;
@@ -53,7 +53,6 @@ public class servotest extends LinearOpMode {
     double intakeConst = 0.8;
     double intakePower = 0;
     ElapsedTime cycleTimer = new ElapsedTime();
-    int motif_index = 0;
     //--------------------------------------------
     double targetX = 16;
     double targetY = 135;
@@ -80,14 +79,7 @@ public class servotest extends LinearOpMode {
         waitForStart();
         while (opModeIsActive()) {
             follower.update();
-            if(gamepad2.xWasPressed()) shootindex = SpindexToShootPos(shootindex-1);
-            if(gamepad2.bWasPressed()) shootindex = SpindexToShootPos(shootindex+1);
             if(gamepad2.aWasPressed()) shootindex = SpindexToShootPos(2);
-            if(gamepad2.yWasPressed()) Kick();
-
-            if(gamepad1.xWasPressed()) intakeindex = SpindexToIntakePos(intakeindex-1);
-            if(gamepad1.bWasPressed()) intakeindex = SpindexToIntakePos(intakeindex+1);
-
 
             //SHOOT MACRO
             if(gamepad2.dpad_up) ShootUnsorted();
@@ -96,15 +88,9 @@ public class servotest extends LinearOpMode {
             if(gamepad2.dpad_down) ShootSorted();
             else SortShootState = 0;
 
-            if(gamepad2.dpadRightWasPressed()) SpindexSpinToColor(1);//purple
-            if(gamepad2.dpadLeftWasPressed()) SpindexSpinToColor(2);//green
-
             //INTAKE MACRO
             if(gamepad1.right_trigger>0.3){
                 Intake();
-                intakePower = intakeConst;
-            }else if(IntakeState>=4){
-                EndIntake();
                 intakePower = intakeConst;
             }else if(gamepad1.right_bumper){
                 intakePower = -intakeConst;
@@ -121,9 +107,6 @@ public class servotest extends LinearOpMode {
             }else if(gamepad2.left_trigger > 0.4){
                 shooter_tps = 1000;
                 HoodServo.setPosition(0.3);
-                intakePower = intakeConst;
-            }else if(gamepad2.right_bumper){
-                shooter_tps = -500;
                 intakePower = intakeConst;
             }else{
                 shooter_tps = 0;
@@ -149,22 +132,11 @@ public class servotest extends LinearOpMode {
                 SpindexSpinToColor(2);
             }
 
+            MoveTurretToTick(0);
             IntakeMotor.setPower(intakePower);
             TeleDrive();
             Kick_SM();
             Shooter(shooter_tps);
-
-            int[][] motifs = {
-                    {1,1,2},
-                    {1,2,1},
-                    {2,1,1},
-            };
-            if(gamepad2.leftBumperWasPressed()){
-                motif_index = (motif_index+1)%3;
-                motif[0] = motifs[motif_index][0];
-                motif[1] = motifs[motif_index][1];
-                motif[2] = motifs[motif_index][2];
-            }
 
 //            telemetry.addData("backCS", readColor(BackSensor));
 //            telemetry.addData("leftCS", readColor(LeftSensor));
@@ -239,8 +211,8 @@ public class servotest extends LinearOpMode {
 //        TurretMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
 //        TurretMotor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
 
-//        LeftFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-//        LeftFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        LeftFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        LeftFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     //DRIVE
@@ -298,7 +270,6 @@ public class servotest extends LinearOpMode {
         telemetry.addData("Drive mode: " , isRobotCentric ? "ROBOT CENTRIC" : "FIELD CENTRIC");
         telemetry.addData("-----------------------","");
     }
-
 
     double HEADING_LOCK_ANGLE = 2.792;
     PIDFController HeadingPIDF = new PIDFController(0.8, 0, 0.05, 0);
@@ -615,23 +586,13 @@ public class servotest extends LinearOpMode {
             if(IntakeTimer.milliseconds()>SPINDEX_INTAKE_SETTLE_TIME){//wait for it to settle
                 IntakeState = 4;
             }
-        }
-    }
-    public boolean EndIntake(){
-        if(IntakeState == 4){
-            intakeindex = SpindexToIntakePos(2);//go to last intake position
-            IntakeTimer.reset();
-            IntakeState = 5;
-        }else if(IntakeState == 5){
-            if(IntakeTimer.milliseconds()>800){//wait for it to settle
-                IntakeState = 6;
+        }else if(IntakeState == 4){
+            if(BeamBroken() || gamepad1.a){
+                intakeindex = SpindexToIntakePos(2);//go to last intake position
+                IntakeTimer.reset();
+                IntakeState = 5;
             }
-        }else if(IntakeState == 6){
-            IntakeState = 0;
-            return true;
-            //Intake done
         }
-        return false;
     }
 
     //SPINDEXER SHOOT POSITIONS

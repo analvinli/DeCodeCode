@@ -20,8 +20,8 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.firstinspires.ftc.vision.VisionPortal;
 import java.util.List;
 
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "blue tele")
-public class servotest extends LinearOpMode {
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "red tele")
+public class redtele extends LinearOpMode {
     //Drivetrain
     DcMotorEx RightFront;
     DcMotorEx RightRear;
@@ -55,12 +55,12 @@ public class servotest extends LinearOpMode {
     ElapsedTime cycleTimer = new ElapsedTime();
     int motif_index = 0;
     //--------------------------------------------
-    double targetX = 16;
+    double targetX = 128;
     double targetY = 135;
 
-    double startX = 105.3;
+    double startX = 38.7;
     double startY = 33.3;
-    double startHeading = Math.PI;
+    double startHeading = 0;
     //--------------------------------------------
 
     public void runOpMode() {
@@ -75,6 +75,9 @@ public class servotest extends LinearOpMode {
         //intake, 0.82
         //intake, 0.39
         //intake 0.19
+
+        Pose savedPose = PoseStorage.get();
+        follower.setStartingPose(savedPose);
 
         HoodServo.setPosition(0.3);
         waitForStart();
@@ -189,7 +192,7 @@ public class servotest extends LinearOpMode {
     public void initialize(){
         follower = Constants.createFollower(hardwareMap);
         follower.startTeleOpDrive();
-        follower.setStartingPose(new Pose(startX ,startY, startHeading));
+        //follower.setStartingPose(new Pose(startX ,startY, startHeading));
         //Drivetrain
         RightFront = hardwareMap.get(DcMotorEx.class, "fr");
         RightRear = hardwareMap.get(DcMotorEx.class, "br");
@@ -300,7 +303,7 @@ public class servotest extends LinearOpMode {
     }
 
 
-    double HEADING_LOCK_ANGLE = 2.792;
+    double HEADING_LOCK_ANGLE = 0.349;
     PIDFController HeadingPIDF = new PIDFController(0.8, 0, 0.05, 0);
     public double getHeadingLockRotation() {
         double currentHeading = follower.getPose().getHeading();
